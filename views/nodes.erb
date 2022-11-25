@@ -1,0 +1,45 @@
+<div class="mynavbar mysticky">
+  <section class="row-fluid">  
+    <div class="span4">
+      <!-- emails extension addon -->
+      <%=nav2("Admin", '/admin', "Pampa")%>
+    </div>
+
+    <div class="span8" align="right" style="text-align: right;alignment-adjust: right; margin-left: 0;">
+        <button class='btn btn-blue'>Stop</button>
+    </div>
+  </section>
+</div>
+
+<section class="row-fluid">
+    <div class="span12 box">
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th style='width:150px;'>Node</th>
+                    <th style='width:250px;'>Worker</th>
+                    <th style='width:auto:'>Job</th>
+                    <th style='width:64px; text-align:right;'>Running</th>
+                    <th style='width:64px; text-align:right;'>Queue</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% 
+                BlackStack::Pampa::jobs.each do |j| 
+                    BlackStack::Pampa::nodes.each do |n| 
+                        n.workers.each do |w| 
+                        %>
+                        <tr>
+                            <td><%=n.name.escale_html%></td>
+                            <td><%=w.id.escale_html%></td>
+                            <td><%=j.name.escale_html%></td>
+                        </tr>
+                        <% 
+                        end 
+                    end 
+                end 
+                %>
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,223 @@
+<%
+search_keyword = @login.user.preference('monitoring.users.search_keyword', '', params[:search_keyword])
+=begin
+edit_shared = @login.user.preference('emails.addresses.edit_shared', false, nil)
+edit_enabled = @login.user.preference('emails.addresses.edit_enabled', false, nil)
+edit_max_deliveries_per_day = @login.user.preference('emails.addresses.edit_max_deliveries_per_day', false, nil)
+edit_delivery_interval_min_minutes = @login.user.preference('emails.addresses.edit_delivery_interval_min_minutes', false, nil)
+edit_delivery_interval_max_minutes = @login.user.preference('emails.addresses.edit_delivery_interval_max_minutes', false, nil)
+edit_tags = @login.user.preference('emails.addresses.edit_tags', false, nil)
+
+shared = @login.user.preference('emails.addresses.shared', false, nil)
+enabled = @login.user.preference('emails.addresses.enabled', false, nil)
+max_deliveries_per_day = @login.user.preference('emails.addresses.max_deliveries_per_day', 10, nil)
+delivery_interval_min_minutes = @login.user.preference('emails.addresses.delivery_interval_min_minutes', 5, nil)
+delivery_interval_max_minutes = @login.user.preference('emails.addresses.delivery_interval_max_minutes', 15, nil)
+=end
+selected_ids = @login.user.preference('monitoring.users.selected_ids', '', nil)
+ids = selected_ids.split(',')
+
+all = "
+select 
+	u.id,
+	a.id as account_id,
+	a.api_key, -- to decide if this user is belonging the account owner
+	a.\"name\" as account_name,
+    (not coalesce(a.disabled_trial,false)) as account_trial_allowed,
+	u.\"name\" as \"name\",
+	u.email as email,
+	u.phone as phone,
+	coalesce(u.verified,false) as verified,
+	u.create_time as create_time,
+    u.delete_time as delete_time
+from \"user\" u
+join account a on a.id=u.id_account
+where 1=1
+"
+
+all += " 
+    and (
+        lower(a.name) like '%#{search_keyword.downcase}%' or
+        lower(u.email) like '%#{search_keyword.downcase}%' or
+        lower(u.name) like '%#{search_keyword.downcase}%' or
+        lower(u.phone) like '%#{search_keyword.downcase}%' 
+    )
+" unless search_keyword.empty?
+
+# TODO: use re-utilizable function here.
+page_size = 25
+total_rows = DB[all].count
+if total_rows>0
+  total_pages = (total_rows.to_f/page_size.to_f).ceil
+  # if there is a GET parameters `number` on the URL, update the user preference regarding the page number on this screen
+  # then, get user preferences regarding the page number on this screen
+  page_number = @login.user.preference("emails.addresses.pagination.page", 1, params[:number].nil? ? nil : params[:number].to_i)
+  # pagination correction to prevent glitches
+  page_number = 1 if page_number < 1
+  page_number = total_pages if page_number > total_pages
+  # calculate info for showing at the bottom of the table
+  from_row = (page_number.to_i-1) * page_size.to_i + 1
+  to_row = [page_number*page_size, total_rows].min
+else
+  total_pages = 1
+  page_number = 1
+  from_row = 0
+  to_row = 0
+end
+
+q = "
+"+all+"
+  LIMIT #{page_size.to_s}
+  OFFSET #{((page_number.to_i - 1) * page_size.to_i).to_s}
+"
+%>
+
+<!-- NavBar -->
+<div class="mynavbar mysticky">
+	<section class="row-fluid">	
+		<div class="span4">
+		    <%=nav2("Monotoring", "/monitoring", "Users")%>
+		</div>
+		<div class="span8" style='text-align:right;'>
+            <form action="/monitoring/users" method="get">
+                <div class="pull-right">
+                    <div class="span8">
+                        <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
+                    </div>
+                    <button class="btn btn-blue btn-medium btn-submit" style="margin-left: 2px;" type="submit" onclick="">
+                        <i class='icon-search'></i> Search
+                    </button>
+                </div>    
+
+                <div class='btn-group'>
+                    <a class='btn btn-blue' href='/monitoring/filter_delete_user'><i class='icon-trash'></i> Delete</a>
+                    <a class='btn btn-blue' href='/monitoring/filter_restore_user'><i class='icon-undo'></i> Restore</a>
+                </div>
+
+                <div class='btn-group'>
+                    <a class='btn btn-blue' href='/monitoring/filter_allow_trial'><i class='icon-ok'></i> Allow Trial</a>
+                    <a class='btn btn-blue' href='/monitoring/filter_disallow_trial'><i class='icon-remove'></i> Disallow Trial</a>
+                </div>
+            </form>
+        </div>
+	</section>
+</div>
+
+<!-- Single Panel -->
+<section class="row-fluid">
+	<div class="span12 box">
+        <p><b>Records:</b> <%=from_row.to_label%> to <%=to_row.to_label%> <b>of</b> <%=total_rows.to_label%></p>
+        <table class="table table-striped" style="table-layout: fixed; width: 100%;">
+            <thead>
+                <th style="width:24px;"><input type='checkbox' class='select-all-rows'></th>
+                <th style="width:auto;">Account<br/>Name</th>
+                <th style="width:48px;">Active</th>
+                <th style="width:48px;">Account<br/>Triable</th>
+                <th style="width:100px;">User<br/>Name</th>
+                <th style="width:100px;">Email</th>
+                <th style="width:75px;">Phone</th>
+                <th style="width:48px;">Verified</th>
+                <th style="width:75px;">SignUp<br/>Time</th>
+                <th style="width:48px;">Access<br/>Link</th>
+                <th style="width:14px;"><!-- delete/restore --></th>
+                <th style="width:14px;"><!-- allow/disallow trual --></th>
+            </thead>
+            <tbody>
+                <%
+                i = 0
+                DB[q].all do |row|
+                    i += 1
+                %>
+                <tr>
+                    <th><input type='checkbox' class='select-row' data-id='<%=row[:id].to_guid%>' <%=ids.include?(row[:id].to_guid) ? 'checked' : ''%> /></th>
+                    <td class="fix" title="<%=row[:account_name].to_s.encode_html%>">
+                        <%=row[:account_name].to_s.encode_html%><br/>
+                        <span style='color:gray;'><%=row[:account_id].to_s.encode_html%></span>
+                    </td>
+                    <td class="fix" title="<%=row[:delete_time].to_s.encode_html%>">
+                        <%=row[:delete_time].nil? ? '<i class="icon-circle" style="color:green"></i>' : '<i class="icon-circle" style="color:red"></i>'%>
+                    </td>
+                    <td class="fix" title="<%=row[:account_trial_allowed].to_s.encode_html%>">
+                        <%=row[:account_trial_allowed] ? '<i class="icon-ok" style="color:blue"></i>' : '<i class="icon-remove" style="color:red"></i>'%>
+                    </td>
+
+                    <td class="fix" title="<%=row[:name].to_s.encode_html%>">
+                        <%=row[:name].to_s.encode_html%>
+                    </td>
+                    <td class="fix" title="<%=row[:email].to_s.encode_html%>">
+                        <%=row[:email].to_s.encode_html%>
+                    </td>
+                    <td class="fix" title="<%=row[:phone].to_s.encode_html%>">
+                        <%=row[:phone].to_s.encode_html%>
+                    </td>
+
+                    <td class="fix" title="<%=row[:verified].to_s.encode_html%>">
+                        <%=row[:verified] ? '<i class="icon-ok" style="color:blue"></i>' : '<i class="icon-remove" style="color:red"></i>'%>
+                    </td>
+
+                    <td class="fix" title="<%=row[:create_time].to_s.encode_html%>">
+                        <%=row[:create_time].to_s[0..9]%>
+                    </td>
+
+                    <td class="fix" title="Account Access Link. Paste it into another browser.">
+                        <button class='btn btn-link'><i class="icon-copy"></i></button>
+                    </td>
+
+                    <td class="fix" style="text-align:right;">
+                        <%
+                        if row[:delete_time]
+                        %>
+                        <a title='Restore User' href='/monitoring/filter_restore_user?uid=<%=row[:id].to_guid%>/edit'><i class='icon-undo'></i></a>
+                        <%
+                        else #if row[:delete_time]
+                        %>
+                        <a title='Restore User' href='/monitoring/filter_delete_user?uid=<%=row[:id].to_guid%>/edit'><i class='icon-trash'></i></a>
+                        <%
+                        end #if row[:delete_time]
+                        %>
+                    </td>
+
+                    <td class="fix" style="text-align:right;">
+                        <%
+                        if row[:account_trial_allowed]
+                        %>
+                        <a title='Disallow Trial' href='/monitoring/filter_disallow_trial?uid=<%=row[:id].to_guid%>/edit'><i class='icon-remove'></i></a>
+                        <%
+                        else #if row[:delete_time]
+                        %>
+                        <a title='Allow Trial' href='/monitoring/filter_allow_trial?uid=<%=row[:id].to_guid%>/edit'><i class='icon-ok'></i></a>
+                        <%
+                        end #if row[:delete_time]
+                        %>
+                    </td>
+                </tr>
+                <%
+                end
+
+                if i==0
+                %>
+                <tr>
+                    <td colspan="11" class="fix" align='center' style='text-align:center;'>
+                        No users found.
+                    </td>
+                <tr>
+                <%
+                end
+                %>
+            </tbody>
+        </table>
+        <div class="pagination"></div>
+    </div>
+</section>
+
+<script>    
+    $(document).ready(function() {
+        drawPagination($(".pagination"), <%=page_number%>, <%=total_pages%>);
+
+        enableSelectRows({
+            afterCallback: function() {
+                // do nothing
+            },
+        });
+    });
+</script>
