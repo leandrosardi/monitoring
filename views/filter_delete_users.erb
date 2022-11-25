@@ -1,0 +1,9 @@
+<%
+begin
+    uids = params[:uids].split(',')
+    DB.execute("UPDATE \"user\" SET delete_time = current_timestamp() WHERE id IN ('#{uids.join("','")}')")
+    redirect "/monitoring/users?msg=Users+Deleted"
+rescue => e
+    redirect "/monitoring/users?err=Error+Deleting+Users (#{CGI.escape(e.message)})"
+end
+%>

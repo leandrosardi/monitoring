@@ -1,0 +1,10 @@
+<%
+begin
+    uids = params[:uids].split(',')
+    aids = DB["SELECT DISTINCT u.id_account FROM \"user\" u WHERE u.id IN ('#{uids.join("','")}')"].map(:id_account)
+    DB.execute("UPDATE \"account\" SET disabled_trial = false WHERE id IN ('#{aids.join("','")}')")
+    redirect "/monitoring/users?msg=Trials+Enabled"
+rescue => e
+    redirect "/monitoring/users?err=Error+Enabling+Trials (#{CGI.escape(e.message)})"
+end
+%>

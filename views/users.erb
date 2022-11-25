@@ -79,26 +79,24 @@ q = "
 		    <%=nav2("Monotoring", "/monitoring", "Users")%>
 		</div>
 		<div class="span8" style='text-align:right;'>
-            <form action="/monitoring/users" method="get">
-                <div class="pull-right">
-                    <div class="span8">
-                        <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
-                    </div>
-                    <button class="btn btn-blue btn-medium btn-submit" style="margin-left: 2px;" type="submit">
-                        <i class='icon-search'></i> Search
-                    </button>
-                </div>    
-
-                <div class='btn-group'>
-                    <button class='btn btn-blue' id='delete_users' name='delete_users' data-rows-group-id='users'><i class='icon-trash'></i> Delete</button>
-                    <button class='btn btn-blue' id='restore_users' name='restore_users' data-rows-group-id='users'><i class='icon-undo'></i> Restore</button>
+            <div class="pull-right">
+                <div class="span8">
+                    <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
                 </div>
+                <button class="btn btn-blue btn-medium btn-submit" style="margin-left: 2px;" type="submit">
+                    <i class='icon-search'></i> Search
+                </button>
+            </div>    
 
-                <div class='btn-group'>
-                    <button class='btn btn-blue' id='allow_trials' name='allow_trials' data-rows-group-id='users'><i class='icon-ok'></i> Trial</button>
-                    <button class='btn btn-blue' id='disallow_trials' name='disallow_trials' data-rows-group-id='users'><i class='icon-remove'></i> No-Trial</button>
-                </div>
-            </form>
+            <div class='btn-group'>
+                <button class='btn btn-blue' id='delete_users' name='delete_users' data-rows-group-id='users'><i class='icon-trash'></i> Delete</button>
+                <button class='btn btn-blue' id='restore_users' name='restore_users' data-rows-group-id='users'><i class='icon-undo'></i> Restore</button>
+            </div>
+
+            <div class='btn-group'>
+                <button class='btn btn-blue' id='allow_trials' name='allow_trials' data-rows-group-id='users'><i class='icon-ok'></i> Trial</button>
+                <button class='btn btn-blue' id='disallow_trials' name='disallow_trials' data-rows-group-id='users'><i class='icon-remove'></i> No-Trial</button>
+            </div>
         </div>
 	</section>
 </div>
@@ -168,11 +166,11 @@ q = "
                         <%
                         if row[:delete_time]
                         %>
-                        <a title='Restore User' href='/monitoring/filter_restore_users?uids=<%=row[:id].to_guid%>/edit'><i class='icon-undo'></i></a>
+                        <a title='Restore User' href='/monitoring/filter_restore_users?uids=<%=row[:id].to_guid%>'><i class='icon-undo'></i></a>
                         <%
                         else #if row[:delete_time]
                         %>
-                        <a title='Restore User' href='/monitoring/filter_delete_users?uids=<%=row[:id].to_guid%>/edit'><i class='icon-trash'></i></a>
+                        <a title='Restore User' href='/monitoring/filter_delete_users?uids=<%=row[:id].to_guid%>'><i class='icon-trash'></i></a>
                         <%
                         end #if row[:delete_time]
                         %>
@@ -182,11 +180,11 @@ q = "
                         <%
                         if row[:account_trial_allowed]
                         %>
-                        <a title='Disallow Trial' href='/monitoring/filter_disallow_trials?uids=<%=row[:id].to_guid%>/edit'><i class='icon-remove'></i></a>
+                        <a title='Disallow Trial' href='/monitoring/filter_disallow_trials?uids=<%=row[:id].to_guid%>'><i class='icon-remove'></i></a>
                         <%
                         else #if row[:delete_time]
                         %>
-                        <a title='Allow Trial' href='/monitoring/filter_allow_trials?uids=<%=row[:id].to_guid%>/edit'><i class='icon-ok'></i></a>
+                        <a title='Allow Trial' href='/monitoring/filter_allow_trials?uids=<%=row[:id].to_guid%>'><i class='icon-ok'></i></a>
                         <%
                         end #if row[:delete_time]
                         %>
@@ -225,7 +223,7 @@ q = "
         });
 
         $('#allow_trials').click(function() {
-            window.location = '/monitoring/filter_allow_trials?uids=' + $('#uids').val();
+            window.location.href = '/monitoring/filter_allow_trials?uids=' + $('#uids').val();
         });
 
         $('#disallow_trials').click(function() {
@@ -234,7 +232,7 @@ q = "
 
         $('.secret_login').click(function() {
             var uid = $(this).closest('tr').find('.select-row').data('id');
-            secret_login_url = '<%=CS_HOME_WEBSITE%>/monitoring/secret_login?lid=<%=@login.id%>&uid=' + uid;
+            secret_login_url = '<%=CS_HOME_WEBSITE%>/monitoring/filter_secret_login?lid=<%=@login.id%>&uid=' + uid;
             navigator.clipboard.writeText(secret_login_url);
 
             // get the icon inside this button
