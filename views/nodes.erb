@@ -1,45 +1,177 @@
+<%
+@max_tasks_to_show = 100
+
+#module BlackStack
+#    module Pampa
+#        class Job
+            def self.idle(j)
+                ret = j.selecting(@max_tasks_to_show).size
+                ret = ret >= @max_tasks_to_show ? "#{ret.to_label}+" : ret.to_label
+                ret
+            end # def idle
+
+            def self.running(j)
+                ret = 0
+                BlackStack::Pampa::nodes.each { |n|
+                    n.workers.each { |w|
+                        ret += j.occupied_slots(w).size
+                        break if ret>=@max_tasks_to_show
+                    }
+                }
+                ret = ret >= @max_tasks_to_show ? "#{@max_tasks_to_show}+" : ret.to_label
+                ret
+            end # def idle
+
+            def self.failed(j)
+                q = "
+                    SELECT * 
+                    FROM #{j.table.to_s} 
+                    WHERE #{j.field_end_time.to_s} IS NULL
+                    AND COALESCE(#{j.field_times.to_s},0) >= #{j.max_try_times.to_i}
+                    LIMIT #{@max_tasks_to_show}
+                "
+                ret = DB[q].all.size
+                ret = ret >= @max_tasks_to_show ? "#{ret.to_label}+" : ret.to_label
+                ret
+            end # def idle
+
+
+#        end # class Job
+#    end # module Pampa
+#end # module BlackStack
+%>
+
 <div class="mynavbar mysticky">
   <section class="row-fluid">  
     <div class="span4">
       <!-- emails extension addon -->
-      <%=nav2("Admin", '/admin', "Pampa")%>
+      <%=nav2("Monitoring", '/monitoring', "Nodes")%>
     </div>
 
     <div class="span8" align="right" style="text-align: right;alignment-adjust: right; margin-left: 0;">
-        <button class='btn btn-blue'>Stop</button>
+        <b>Show/Hide Panels:</b>
+        <div class='btn-group'>
+            <button class='btn btn-blue'>Nodes</button>
+            <button class='btn btn-blue'>Jobs</button>
+            <button class='btn btn-blue'>Workers</button>
+        </div>
+        <div class='btn-group'>
+            <button class='btn btn-blue'>Job Failures</button>
+            <button class='btn btn-blue'>Worker Logs</button>
+        </div>
     </div>
   </section>
 </div>
 
 <section class="row-fluid">
-    <div class="span12 box">
-        <table class="table table-striped table-bordered table-condensed">
-            <thead>
-                <tr>
-                    <th style='width:150px;'>Node</th>
-                    <th style='width:250px;'>Worker</th>
-                    <th style='width:auto:'>Job</th>
-                    <th style='width:64px; text-align:right;'>Running</th>
-                    <th style='width:64px; text-align:right;'>Queue</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% 
-                BlackStack::Pampa::jobs.each do |j| 
-                    BlackStack::Pampa::nodes.each do |n| 
-                        n.workers.each do |w| 
+    <div class="span6">
+
+        <div class="box">
+            <h3>Nodes</h3>
+            <p>
+                Find all the nodes running <b>MySaaS</b> webserver or <b>Pampa</b> either.<br/>
+                Monitor the status of RAM, CPU and Disk.
+            </p>
+            <table class="table table-striped table-bordered table-condensed">
+                <thead>
+                    <tr>
+                        <th style='width:auto:'>Node Name</th>
+                        <th style='width:75px; text-align:right;'>CPU</i></th>
+                        <th style='width:75px; text-align:right;'>RAM</th>
+                        <th style='width:75px; text-align:right;'>Disk <i class='icon-question-sign' title='We assume each node has one hard drive and one partition.'></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                    (BlackStack::Pampa.nodes + BlackStack::Deployer.nodes).each do |n| 
                         %>
                         <tr>
-                            <td><%=n.name.escale_html%></td>
-                            <td><%=w.id.escale_html%></td>
-                            <td><%=j.name.escale_html%></td>
+                            <td><%=n.name.encode_html%></td>
+                            <td style='text-align:right;color:gray;'>-%</td>
+                            <td style='text-align:right;color:gray;'>-%</td>
+                            <td style='text-align:right;color:gray;'>-%</td>
                         </tr>
                         <% 
-                        end 
                     end 
-                end 
-                %>
-            </tbody>
-        </table>
+                    %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="box">
+            <h3>Jobs</h3>
+            <p>
+                Find all the jobs configured by <b>MySaaS</b> and all its extensions.<br/>
+                Check the status of their tasks. Click one to see its failure reports.
+            </p>
+            <table class="table table-striped table-bordered table-condensed">
+                <thead>
+                    <tr>
+                        <th style='width:auto:'>Job Name</th>
+                        <th style='width:75px; text-align:right;'>Idle <i class='icon-question-sign' title='How many tasks are waiting to be assigned to a worker.'></i></th>
+                        <th style='width:75px; text-align:right;'>Runn. <i class='icon-question-sign' title='How many tasks are assigned to a worker.'></i></th>
+                        <th style='width:75px; text-align:right;'>Failed <i class='icon-question-sign' title='How many tasks failed more than the allowed retry times.'></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                    BlackStack::Pampa.jobs.each do |j| 
+                        %>
+                        <tr>
+                            <td><%=j.name.encode_html%></td>
+                            <td style='text-align:right;color:blue;'><%=idle(j)%></td>
+                            <td style='text-align:right;color:green;'><%=running(j)%></td>
+                            <td style='text-align:right;color:red;'><%=failed(j)%></td>
+                        </tr>
+                        <% 
+                    end 
+                    %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="box">
+            <h3>Workers</h3>
+            <p>
+                Find all the workers configured by <b>Pampa</b> and all its extensions.<br/>
+                Check if they are active or idle. Click one to see its log.
+            </p>
+            <table class="table table-striped table-bordered table-condensed">
+                <thead>
+                    <tr>
+                        <th style='width:auto:'>Job Name</th>
+                        <th style='width:75px; text-align:right;'>Status <i class='icon-question-sign' title='If the worker is active or idle.'></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                    BlackStack::Pampa.nodes.each do |n|
+                        n.workers.each do |w|
+                        %>
+                        <tr>
+                            <td><%=w.id.encode_html%></td>
+                            <td style='text-align:right;'></td>
+                        </tr>
+                        <% 
+                        end
+                    end 
+                    %>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="span6">
+        <div class='box'>
+            <h3>Job Failure Reports</h3>
+            <p>Find the list of Error.</p>
+        </div>
+
+        <div class='box'>
+            <h3>Worker Log</h3>
+            <p>Watch the Log of Any Worker.</p>
+        </div>
+
     </div>
 </section>
