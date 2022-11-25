@@ -31,6 +31,6 @@ BlackStack::Extensions::add ({
     # what are the screens to add in the leftbar
     :leftbar_icons => [
         { :label => 'users', :icon => :user, :screen => :users, },
-        { :label => 'nodes', :icon => :'dot', :screen => :nodes, },
+        { :label => 'nodes', :icon => :desktop, :screen => :nodes, },
     ],
 })
