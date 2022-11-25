@@ -90,13 +90,13 @@ q = "
                 </div>    
 
                 <div class='btn-group'>
-                    <a class='btn btn-blue' href='/monitoring/filter_delete_user'><i class='icon-trash'></i> Delete</a>
-                    <a class='btn btn-blue' href='/monitoring/filter_restore_user'><i class='icon-undo'></i> Restore</a>
+                    <button class='btn btn-blue' id='delete_users' name='delete_users'><i class='icon-trash'></i> Delete</button>
+                    <button class='btn btn-blue' id='restore_users' name='restore_users'><i class='icon-undo'></i> Restore</button>
                 </div>
 
                 <div class='btn-group'>
-                    <a class='btn btn-blue' href='/monitoring/filter_allow_trial'><i class='icon-ok'></i> Allow Trial</a>
-                    <a class='btn btn-blue' href='/monitoring/filter_disallow_trial'><i class='icon-remove'></i> Disallow Trial</a>
+                    <button class='btn btn-blue' id='allow_trials' name='allow_trials'><i class='icon-ok'></i> Allow Trial</button>
+                    <button class='btn btn-blue' id='disallow_trials' name='disallow_trials'><i class='icon-remove'></i> Disallow Trial</button>
                 </div>
             </form>
         </div>
@@ -145,10 +145,10 @@ q = "
                         <%=row[:name].to_s.encode_html%>
                     </td>
                     <td class="fix" title="<%=row[:email].to_s.encode_html%>">
-                        <%=row[:email].to_s.encode_html%>
+                        <a href='mailto:<%=row[:email].to_s.encode_html%>'><%=row[:email].to_s.encode_html%></a>
                     </td>
                     <td class="fix" title="<%=row[:phone].to_s.encode_html%>">
-                        <%=row[:phone].to_s.encode_html%>
+                        <a href='tel:<%=row[:phone].to_s.encode_html%>'><%=row[:phone].to_s.encode_html%></a>
                     </td>
 
                     <td class="fix" title="<%=row[:verified].to_s.encode_html%>">
@@ -160,18 +160,18 @@ q = "
                     </td>
 
                     <td class="fix" title="Account Access Link. Paste it into another browser.">
-                        <button class='btn btn-link'><i class="icon-copy"></i></button>
+                        <button class='btn btn-link' id='secret_login' name='secret_login'><i class="icon-copy"></i></button>
                     </td>
 
                     <td class="fix" style="text-align:right;">
                         <%
                         if row[:delete_time]
                         %>
-                        <a title='Restore User' href='/monitoring/filter_restore_user?uid=<%=row[:id].to_guid%>/edit'><i class='icon-undo'></i></a>
+                        <a title='Restore User' href='/monitoring/filter_restore_users?uid=<%=row[:id].to_guid%>/edit'><i class='icon-undo'></i></a>
                         <%
                         else #if row[:delete_time]
                         %>
-                        <a title='Restore User' href='/monitoring/filter_delete_user?uid=<%=row[:id].to_guid%>/edit'><i class='icon-trash'></i></a>
+                        <a title='Restore User' href='/monitoring/filter_delete_users?uid=<%=row[:id].to_guid%>/edit'><i class='icon-trash'></i></a>
                         <%
                         end #if row[:delete_time]
                         %>
@@ -181,11 +181,11 @@ q = "
                         <%
                         if row[:account_trial_allowed]
                         %>
-                        <a title='Disallow Trial' href='/monitoring/filter_disallow_trial?uid=<%=row[:id].to_guid%>/edit'><i class='icon-remove'></i></a>
+                        <a title='Disallow Trial' href='/monitoring/filter_disallow_trials?uid=<%=row[:id].to_guid%>/edit'><i class='icon-remove'></i></a>
                         <%
                         else #if row[:delete_time]
                         %>
-                        <a title='Allow Trial' href='/monitoring/filter_allow_trial?uid=<%=row[:id].to_guid%>/edit'><i class='icon-ok'></i></a>
+                        <a title='Allow Trial' href='/monitoring/filter_allow_trials?uid=<%=row[:id].to_guid%>/edit'><i class='icon-ok'></i></a>
                         <%
                         end #if row[:delete_time]
                         %>
