@@ -44,6 +44,10 @@ all += "
     )
 " unless search_keyword.empty?
 
+all += "
+    order by u.create_time desc
+"
+
 # TODO: use re-utilizable function here.
 page_size = 25
 total_rows = DB[all].count
@@ -106,7 +110,7 @@ q = "
 	<div class="span12 box">
         <p><b>Records:</b> <%=from_row.to_label%> to <%=to_row.to_label%> <b>of</b> <%=total_rows.to_label%></p>
         <input type='hidden' name='uids' id='uids' value='' />
-        <table class="table table-striped" style="table-layout: fixed; width: 100%;">
+        <table class="table table-condensed" style="table-layout: fixed; width: 100%;">
             <thead>
                 <th style="width:24px;"><input type='checkbox' class='select-all-rows' data-input-id='uids' data-rows-group-id='users'></th>
                 <th style="width:auto;">Account<br/>Name</th>
