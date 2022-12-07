@@ -1,19 +1,5 @@
 <%
 search_keyword = @login.user.preference('monitoring.users.search_keyword', '', params[:search_keyword])
-=begin
-edit_shared = @login.user.preference('emails.addresses.edit_shared', false, nil)
-edit_enabled = @login.user.preference('emails.addresses.edit_enabled', false, nil)
-edit_max_deliveries_per_day = @login.user.preference('emails.addresses.edit_max_deliveries_per_day', false, nil)
-edit_delivery_interval_min_minutes = @login.user.preference('emails.addresses.edit_delivery_interval_min_minutes', false, nil)
-edit_delivery_interval_max_minutes = @login.user.preference('emails.addresses.edit_delivery_interval_max_minutes', false, nil)
-edit_tags = @login.user.preference('emails.addresses.edit_tags', false, nil)
-
-shared = @login.user.preference('emails.addresses.shared', false, nil)
-enabled = @login.user.preference('emails.addresses.enabled', false, nil)
-max_deliveries_per_day = @login.user.preference('emails.addresses.max_deliveries_per_day', 10, nil)
-delivery_interval_min_minutes = @login.user.preference('emails.addresses.delivery_interval_min_minutes', 5, nil)
-delivery_interval_max_minutes = @login.user.preference('emails.addresses.delivery_interval_max_minutes', 15, nil)
-=end
 selected_ids = @login.user.preference('monitoring.users.selected_ids', '', nil)
 ids = selected_ids.split(',')
 
@@ -84,12 +70,14 @@ q = "
 		</div>
 		<div class="span8" style='text-align:right;'>
             <div class="pull-right">
-                <div class="span8">
-                    <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
-                </div>
-                <button class="btn btn-blue btn-medium btn-submit" style="margin-left: 2px;" type="submit">
-                    <i class='icon-search'></i> Search
-                </button>
+                <form action="/monitoring/users" method="get">
+                    <div class="span8">
+                        <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
+                    </div>
+                    <button class="btn btn-blue btn-medium btn-submit" style="margin-left: 2px;" type="submit">
+                        <i class='icon-search'></i> Search
+                    </button>
+                </form>
             </div>    
 
             <div class='btn-group'>
