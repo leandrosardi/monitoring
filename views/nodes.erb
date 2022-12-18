@@ -1,46 +1,6 @@
 <%
 @max_tasks_to_show = 100
 
-#module BlackStack
-#    module Pampa
-#        class Job
-            def self.idle(j)
-                ret = j.selecting(@max_tasks_to_show).size
-                ret = ret >= @max_tasks_to_show ? "#{ret.to_label}+" : ret.to_label
-                ret
-            end # def idle
-
-            def self.running(j)
-                ret = 0
-                BlackStack::Pampa::nodes.each { |n|
-                    n.workers.each { |w|
-                        ret += j.occupied_slots(w).size
-                        break if ret>=@max_tasks_to_show
-                    }
-                }
-                ret = ret >= @max_tasks_to_show ? "#{@max_tasks_to_show}+" : ret.to_label
-                ret
-            end # def idle
-
-            def self.failed(j)
-                q = "
-                    SELECT * 
-                    FROM #{j.table.to_s} 
-                    WHERE #{j.field_end_time.to_s} IS NULL
-                    AND COALESCE(#{j.field_times.to_s},0) >= #{j.max_try_times.to_i}
-                    LIMIT #{@max_tasks_to_show}
-                "
-                ret = DB[q].all.size
-                ret = ret >= @max_tasks_to_show ? "#{ret.to_label}+" : ret.to_label
-                ret
-            end # def idle
-
-
-#        end # class Job
-#    end # module Pampa
-#end # module BlackStack
-%>
-
 <div class="mynavbar mysticky">
   <section class="row-fluid">  
     <div class="span4">
@@ -119,9 +79,9 @@
                         %>
                         <tr>
                             <td><%=j.name.encode_html%></td>
-                            <td style='text-align:right;color:blue;'><%=idle(j)%></td>
-                            <td style='text-align:right;color:green;'><%=running(j)%></td>
-                            <td style='text-align:right;color:red;'><%=failed(j)%></td>
+                            <td style='text-align:right;color:blue;'><%=j.idle%></td>
+                            <td style='text-align:right;color:green;'><%=j.running%></td>
+                            <td style='text-align:right;color:red;'><%=j.failed%></td>
                         </tr>
                         <% 
                     end 
