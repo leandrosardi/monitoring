@@ -1,0 +1,20 @@
+<%
+begin
+    aids = params[:selected_ids].split(',')
+    lead_credits = params[:lead_credits].to_i
+    email_credits = params[:email_credits].to_i
+
+    if lead_credits > 0
+    end
+
+    if email_credits > 0
+    end
+    
+    # update balance snapshot
+    BlackStack::I2P:Account.update_balance_snapshot(aids)
+
+    redirect "/monitoring/agency/accounts?msg=Bonus+Added"
+rescue => e
+    redirect "/monitoring/agency/accounts?err=Error+Adding+Bonus (#{CGI.escape(e.message)})"
+end
+%>
