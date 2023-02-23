@@ -15,7 +15,7 @@ select
 	--c.name,
 	sum(coalesce(t.stat_sents,0)) as sents,
 	sum(coalesce(t.stat_positive_replies,0)) as positive_replies,
-	coalesce(count(distinct s.id),0) as active_subscriptions,
+	count(distinct s.id) as active_subscriptions,
 	-coalesce(b1.credits,0) as leads_credits, 
 	-coalesce(b2.credits,0) as emails_credits
 	
@@ -34,10 +34,10 @@ where 1=1
 
 all += " 
     and (
-        lower(a.name) like '%#{search_keyword.downcase}%' or
-        lower(u.email) like '%#{search_keyword.downcase}%' or
-        lower(u.name) like '%#{search_keyword.downcase}%' or
-        lower(u.phone) like '%#{search_keyword.downcase}%' 
+        lower(a.name) like '%#{search_keyword.downcase.to_sql}%' or
+        lower(u.email) like '%#{search_keyword.downcase.to_sql}%' or
+        lower(u.name) like '%#{search_keyword.downcase.to_sql}%' or
+        lower(u.phone) like '%#{search_keyword.downcase.to_sql}%' 
     )
 " unless search_keyword.empty?
 
