@@ -16,8 +16,16 @@
 	table.qabot tr.qarow td.qaname {
 		width: 350px;
 		font-size: 14px;
+		border-bottom: 0px;
+        color: gray;
+	}
+
+	table.qabot tr.qarow td.qaname span.qatitle {
+		width: 350px;
+		font-size: 14px;
 		font-weight: bold;
 		border-bottom: 0px;
+        color: black;
 	}
 
 	table.qabot tr.qarow td.qadesc {
@@ -27,7 +35,7 @@
 	}
 
 	table.qabot tr.qarow td.qaflag {
-		width: 75px;
+		width: 125px;
 		height: 50px;
 		text-align: center;
 		vertical-align: middle;
@@ -54,6 +62,11 @@
 	table.qabot tr.qarow td.qagreen {
 		color: white;
 		background-color: rgb(0, 128, 64);
+	}
+
+	table.qabot tr.qarow td.qagray {
+		color: black;
+		background-color: rgb(128, 128, 128);
 	}
 
 	table.qabot tr.qarow td.qachart {
@@ -88,12 +101,31 @@
 <section class="row-fluid">
 	<div class="span12 box">
         <table class="table table-condensed qabot">
+            <%
+            BlackStack::Monitoring.monitors.each { |m|
+                color = m.pass? ? 'qagreen' : 'qared'
+                value = m.last_value.to_s
+                thres = m.get_threshold
+            %>
             <tr class='qarow'>
-                <td class='qaname'>Agents Online</td>
-                <td rowspan=1 class='qaflag qagreen'>
-                    <span class='qavalue'>15</span>
+                <td class='qaname'>
+                    <span class='qatitle'><%=m.name.encode_html%></span><br/>
+                    <%=m.description.encode_html%>
+                </td>
+                <td rowspan=1 class='qaflag <%=color%>'>
+                    <%
+                    if thres.to_i != 0
+                    %>
+                    <span class='qavalue'><%=value%> / <%=thres.to_s%></span>
+                    <%
+                    else # if thres.nil?
+                    %>
+                    <span class='qavalue'><%=value%></span>
+                    <%
+                    end # if thres.nil?
+                    %>
                     <br/>
-                    <span class='qacomment'>agents online</span>
+                    <span class='qacomment'><%=m.unit_name.encode_html%></span>
                 </td>
                 <td rowspan=1 class='qachart'>
                     <!--
@@ -102,7 +134,9 @@
                     no chart yet.
                 </td>
             </tr>
-
+            <%
+            }
+            %>
         </table>
     </div>
 </div>
