@@ -1,3 +1,121 @@
+<%
+# TODO: Move this to config.rb when I can deploy with '"'
+# Defining monitors
+BlackStack::Monitoring.set([{
+  :name => 'Scrapers Online',
+  :description => 'Number of Scrpers Active the Last Hour',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = '
+      --scrapers online - total
+      select count(*) as n
+      from '+34.chr+'user'+34.chr+' u
+      where u.scraper_share is not null
+      and u.scraper_last_ping_time > cast(\''+now.to_s+'\' as timestamp) - interval \'1 hours\'
+    '
+    DB[q].first[:n].to_i
+  end,
+  :threshold => nil, # there is no threshold to comparate
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'scrapers',
+}, {
+  :name => 'Pages Upload / Hr.',
+  :description => 'Number of Pages Uploaded the Last Hour',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = '
+      --
+      -- pages scraped in last hour - total
+      select count(distinct p.id) as n
+      from scr_page p
+      where p.upload_end_time > cast(\''+now.to_s+'\' as timestamp) - interval \'1 hour\'
+      and p.upload_success = true
+    '
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    q = '
+      -- pages upload needed per hour
+      select -(coalesce(sum(b.credits),0) / (21*24)) / 10 as n
+      from account a
+      join balance b on (a.id=b.id_account and b.service_code=\'leads\')
+    '
+    DB[q].first[:n].to_i
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'pages',
+}, {
+  :name => 'Pages Parsing / Hr.',
+  :description => 'Number of Pages Parsed the Last Hour',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = '
+      --
+      -- pages scraped in last hour - total
+      select count(distinct p.id) as n
+      from scr_page p
+      where p.parse_end_time > cast(\''+now.to_s+'\' as timestamp) - interval \'1 hour\'
+      and p.parse_success = true
+    '
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    q = '
+      -- pages upload needed per hour
+      select -(coalesce(sum(b.credits),0) / (21*24)) / 10 as n
+      from account a
+      join balance b on (a.id=b.id_account and b.service_code=\'leads\')
+    '
+    DB[q].first[:n].to_i
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'pages',
+}, {
+  :name => 'Pages in Queue',
+  :description => 'Number of Pages Pending to Be Parsed.\nKeep this number as low as possible, in order to pay additional for scraping services.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = '
+      select count(distinct p.id) as n
+      from scr_page p
+      join scr_order o on (o.id=p.id_order and o.status=true)
+      join '+34.chr+'user'+34.chr+' u on u.id=o.id_user
+      join account a on a.id=u.id_account
+      join balance b on (a.id=b.id_account and b.service_code=\'leads\' and b.amount>0)
+      where p.parse_success is null
+    '
+    DB[q].first[:n].to_i
+  end,
+  :threshold => 0,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'pages',
+}, {
+  :name => 'Email Delivery Capacity',
+  :description => 'Number of Daily Emails that can be sent, over the number of daily emails I need to send.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = '
+      select sum(a.max_deliveries_per_day) as n
+      from eml_address a
+      where a.delete_time is null
+      and a.shared = true
+      and a.enabled = true
+    '
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    q = '
+      select -(coalesce(sum(b.credits),0) / 21) as n
+      from account a
+      join balance b on (a.id=b.id_account and b.service_code=\'deliveries\')
+    '
+    DB[q].first[:n].to_i
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'emails',
+}])
+%>
+
 <style>
     .legendLabel {
         color:White;
