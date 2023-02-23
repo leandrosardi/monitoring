@@ -39,3 +39,113 @@ BlackStack::Extensions::add ({
         { :label => 'capacity', :icon => :dashboard, :screen => :'agency/capacity', },
     ],
 })
+
+module BlackStack
+    module Monitoring
+        TYPE_BOOL = 'bool'
+        TYPE_INT = 'int'
+        TYPE_FLOAT = 'float'
+
+        COMPARSION_FALSE = 'false'
+        COMPARSION_TRUE = 'true'
+        COMPARSION_EQUAL = 'equal'
+        COMPARSION_NOT_EQUAL = 'not_equal'
+        COMPARSION_GREATER = 'greater'
+        COMPARSION_GREATER_EQUAL = 'greater_equal'
+        COMPARSION_LESS = 'less'
+        COMPARSION_LESS_EQUAL = 'less_equal'
+
+        class Monitor
+            attr_accessor :name, :description, :type, :value_function, :threshold_function, :threshold, :comparsion, :unit_name
+            attr_accessor :last_value
+            #attr_accessor :poll_frequency_number, :poll_frequency_unit
+            #attr_accessor :timeline # historical values
+
+            def initialize(h)
+                # TODO: validate h
+                @name = h[:name]
+                @description = h[:description]
+                @type = h[:type]
+                @value_function = h[:value_function]
+                @threshold_function = h[:threshold_function]
+                @threshold = h[:threshold]
+                @comparsion = h[:comparsion]
+                @unit_name = h[:unit_name]
+            end
+            
+            def get_threshold
+                self.threshold_function.nil? ? self.threshold : self.threshold_function.call()
+            end 
+
+            # return true if the monitor is condition is passed.
+            # return false if the monitor is condition is not passed.
+            def pass?
+                x = self.value_function.call()
+                y = self.get_threshold()
+                self.last_value = x
+                case self.type
+                when TYPE_BOOL
+                    case self.comparsion
+                    when COMPARSION_FALSE
+                        return x == !y
+                    when COMPARSION_TRUE
+                        return x == y
+                    end
+                when TYPE_INT
+                    case self.comparsion
+                    when COMPARSION_EQUAL
+                        return x.to_i == y.to_i
+                    when COMPARSION_NOT_EQUAL
+                        return x.to_i != y.to_i
+                    when COMPARSION_GREATER
+                        return x.to_i > y.to_i
+                    when COMPARSION_GREATER_EQUAL
+                        return x.to_i >= y.to_i
+                    when COMPARSION_LESS
+                        return x.to_i < y.to_i
+                    when COMPARSION_LESS_EQUAL
+                        return x.to_i <= y.to_i
+                    end
+                when TYPE_FLOAT
+                    case self.comparsion
+                    when COMPARSION_EQUAL
+                        return x.to_f == y.to_f
+                    when COMPARSION_NOT_EQUAL
+                        return x.to_f != y.to_f
+                    when COMPARSION_GREATER
+                        return x.to_f > y.to_f
+                    when COMPARSION_GREATER_EQUAL
+                        return x.to_f >= y.to_f
+                    when COMPARSION_LESS
+                        return x.to_f < y.to_f
+                    when COMPARSION_LESS_EQUAL
+                        return x.to_f <= y.to_f
+                    end
+                end
+            end
+        end # class Monitor
+
+        @@monitors = []
+
+        def self.add(h)
+            @@monitors << BlackStack::Monitoring::Monitor.new(h)
+        end # def self.add (h)
+
+        def self.set(a)
+            a.each { |h| 
+                @@monitors << BlackStack::Monitoring::Monitor.new(h)
+            }
+        end # def self.add (h)
+
+        def self.monitors
+            @@monitors
+        end
+
+        # return markdown code with documentation of each one of the monitors.
+        def self.doc
+            # TODO: Code Me!    
+        end
+
+    end # module Monitoring
+end # module BlackStack
+

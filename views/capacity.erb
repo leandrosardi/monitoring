@@ -1,0 +1,108 @@
+<style>
+    .legendLabel {
+        color:White;
+    }
+
+	table.qabot {
+		width:100%;
+		margin-top:15px;
+		padding-top:15px;
+	}
+
+	table.qabot tr.qarow {
+		width:100%;
+	}
+
+	table.qabot tr.qarow td.qaname {
+		width: 350px;
+		font-size: 14px;
+		font-weight: bold;
+		border-bottom: 0px;
+	}
+
+	table.qabot tr.qarow td.qadesc {
+		width: auto;
+		font-size: 10px;
+		border-bottom: 2px solid #ccc;
+	}
+
+	table.qabot tr.qarow td.qaflag {
+		width: 75px;
+		height: 50px;
+		text-align: center;
+		vertical-align: middle;
+		border-bottom: 2px solid #ccc;
+	}
+
+	table.qabot tr.qarow td.qaflag span.qavalue {
+		height: 35px;
+		font-size: 20px;
+		font-weight: bold;
+	}
+
+	table.qabot tr.qarow td.qaflag span.qacomment {
+		height: 15px;
+		font-size: 14px;
+		font-weight: bold;
+	}
+
+	table.qabot tr.qarow td.qared {
+		color: white;
+		background-color: rgb(136, 0, 21);
+	}
+
+	table.qabot tr.qarow td.qagreen {
+		color: white;
+		background-color: rgb(0, 128, 64);
+	}
+
+	table.qabot tr.qarow td.qachart {
+		width: 50%;
+		text-align: left;
+		vertical-align: top;
+		border-bottom: 2px solid #ccc;
+	}
+
+	table.qabot tr.qarow td.qabuttons {
+		height: 25px;
+		margin-left: 5px;
+		text-align: left;
+		vertical-align: middle;
+	}
+
+	table.qabot tr.qarow td.qabuttons button {
+		text-decoration: none;
+	}
+</style>
+
+<!-- NavBar -->
+<div class="mynavbar mysticky">
+	<section class="row-fluid">	
+		<div class="span12">
+		    <%=nav3("Monotoring", "/monitoring", "Agency", "/monitoring/agency", "Capacity")%>
+		</div>
+	</section>
+</div>
+
+<!-- Single Panel -->
+<section class="row-fluid">
+	<div class="span12 box">
+        <table class="table table-condensed qabot">
+            <tr class='qarow'>
+                <td class='qaname'>Agents Online</td>
+                <td rowspan=1 class='qaflag qagreen'>
+                    <span class='qavalue'>15</span>
+                    <br/>
+                    <span class='qacomment'>agents online</span>
+                </td>
+                <td rowspan=1 class='qachart'>
+                    <!--
+                        Chart showing the number the status of the alert by ss, mi, hh, dd, mm, qq or yy.
+                    -->
+                    no chart yet.
+                </td>
+            </tr>
+
+        </table>
+    </div>
+</div>
