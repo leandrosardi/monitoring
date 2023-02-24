@@ -57,3 +57,15 @@ end
 get '/monitoring/agency/capacity', :auth => true do
     erb :"/extensions/monitoring/views/capacity", :layout => :'/views/layouts/core'
 end
+
+get '/monitoring/agency/scrapers', :auth => true do
+    erb :"/extensions/scraper/views/dashboard", :layout => :'/views/layouts/core'
+end
+
+get '/monitoring/agency/addresses', :auth => true do
+    erb :"/extensions/emails/views/addresses", :layout => :'/views/layouts/core'
+end
+
+get '/monitoring/agency/unibox', :auth => true do
+    erb :"/extensions/emails/views/unibox", :layout => :'/views/layouts/core'
+end
