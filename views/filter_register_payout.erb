@@ -1,0 +1,37 @@
+<%
+begin
+    uids = params[:uids].split(',')
+#    DB.execute("UPDATE \"account\" SET disabled_trial = false WHERE id IN ('#{aids.join("','")}')")
+    redirect "/monitoring/agency/scrapers?msg=Trials+Enabled"
+rescue => e
+    redirect "/monitoring/agency/scrapers?err=Error+Enabling+Trials (#{CGI.escape(e.message)})"
+end
+
+=begin
+/*
+insert into scr_movement (id, create_time, id_user, type, amount)
+select gen_random_uuid(), curreent_timestamp(), u.id, 1, coalesce(u.scraper_stat_total_earnings,0) - coalesce(u.scraper_stat_total_payouts,0) as to_pay
+from "user" u
+where u.id in (
+	'd2ca46e7-ca9c-4962-9f19-841376bdb85e',
+	'6a5bca5a-291b-4a5b-bfdf-b09acc62b140',
+	'70ab461a-4d1b-4770-b152-ba38f2d593af',
+	'abeb409b-869a-4e50-a038-1db9c449c3ae',
+	'905b331e-c8d4-4229-bc2d-255cc38100c3'
+)
+*/
+
+update "user"
+set 
+	scraper_stat_total_earnings = subquery.total_earnings,
+	scraper_stat_total_payouts = subquery.total_payouts
+where "user".id in (
+	'd2ca46e7-ca9c-4962-9f19-841376bdb85e',
+	'6a5bca5a-291b-4a5b-bfdf-b09acc62b140',
+	'70ab461a-4d1b-4770-b152-ba38f2d593af',
+	'abeb409b-869a-4e50-a038-1db9c449c3ae',
+	'905b331e-c8d4-4229-bc2d-255cc38100c3'
+)
+=end
+%>
+

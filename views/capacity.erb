@@ -62,9 +62,7 @@ BlackStack::Monitoring.set([{
   :threshold_function => Proc.new do |*args|
     q = '
       -- pages upload needed per hour
-      select -(coalesce(sum(b.credits),0) / (21*24)) / 10 as n
-      from account a
-      join balance b on (a.id=b.id_account and b.service_code=\'leads\')
+      
     '
     DB[q].first[:n].to_i
   end,
@@ -83,6 +81,7 @@ BlackStack::Monitoring.set([{
       join account a on a.id=u.id_account
       join balance b on (a.id=b.id_account and b.service_code=\'leads\' and b.amount>0)
       where p.parse_success is null
+      and a.premium=true
     '
     DB[q].first[:n].to_i
   end,

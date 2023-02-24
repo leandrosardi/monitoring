@@ -57,3 +57,13 @@ end
 get '/monitoring/agency/capacity', :auth => true do
     erb :"/extensions/monitoring/views/capacity", :layout => :'/views/layouts/core'
 end
+
+
+# TODO: move this to the agency extension
+get '/monitoring/agency/scrapers', :auth => true do
+    erb :"/extensions/scraper/views/dashboard", :layout => :'/views/layouts/core'
+end
+
+get '/monitoring/agency/filter_register_payout', :auth => true do
+    erb :"/extensions/monitoring/views/filter_register_payout"
+end
