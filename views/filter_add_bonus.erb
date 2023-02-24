@@ -1,0 +1,42 @@
+<%
+begin
+    aids = params[:selected_ids].split(',')
+    lead_credits = -params[:lead_credits].to_i
+    email_credits = -params[:email_credits].to_i
+
+    if lead_credits != 0 || email_credits != 0
+        if lead_credits != 0
+            desc = lead_credits > 0 ? "Lead Credits Added" : "Lead Credits Removed"
+            q = "
+                INSERT INTO movement
+                (id, id_account, create_time, type, id_user_creator, description, paypal1_amount, bonus_amount, amount, credits, profits_amount, service_code)
+                SELECT
+                gen_random_uuid(), a.id, current_timestamp(), 1, '#{@login.id_user}', '#{desc.to_sql}', 0, 0, 0, #{lead_credits.to_s}, 0, 'leads'
+                FROM account a
+                WHERE a.id IN ('#{aids.join("','")}')
+            "
+            DB.execute(q)
+        end
+
+        if email_credits != 0
+            desc = email_credits > 0 ? "Email Credits Added" : "Email Credits Removed"
+            q = "
+                INSERT INTO movement
+                (id, id_account, create_time, type, id_user_creator, description, paypal1_amount, bonus_amount, amount, credits, profits_amount, service_code)
+                SELECT
+                gen_random_uuid(), a.id, current_timestamp(), 1, '#{@login.id_user}', '#{desc.to_sql}', 0, 0, 0, #{email_credits.to_s}, 0, 'deliveries'
+                FROM account a
+                WHERE a.id IN ('#{aids.join("','")}')
+            "
+            DB.execute(q)
+        end
+    
+        # update balance snapshot
+        BlackStack::I2P::Account.update_balance_snapshot(aids)
+    end
+
+    redirect "/monitoring/agency/accounts?msg=Bonus+Added"
+rescue => e
+    redirect "/monitoring/agency/accounts?err=Error+Adding+Bonus (#{CGI.escape(e.message)})"
+end
+%>
