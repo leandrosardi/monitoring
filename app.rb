@@ -62,8 +62,9 @@ end
 get '/monitoring/agency/scrapers', :auth => true do
     erb :"/extensions/scraper/views/dashboard", :layout => :'/views/layouts/core'
 end
-get '/monitoring/agency/filter_register_payout', :auth => true do
-    erb :"/extensions/monitoring/views/filter_register_payout"
+
+get '/monitoring/agency/filter_payout', :auth => true do
+    erb :"/extensions/scraper/views/filter_payout"
 end
 
 get '/monitoring/agency/addresses', :auth => true do
