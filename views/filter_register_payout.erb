@@ -1,0 +1,26 @@
+<%
+begin
+    uids = params[:selected_ids].split(',')
+    details = params[:details]
+    # update total_earnings and total_payouts
+    BlackStack::Scraper::User.update_scraping_stats(uids)
+    # register payout bundle
+    bid = guid
+    DB.execute("INSERT INTO scr_payout_bundle (id, details) VALUES ('#{bid}', '#{details.to_s.to_sql}')")
+    # register payout movements
+    q = "
+        INSERT INTO scr_movement (id, create_time, id_user, id_payout_bundle, type, amount)
+        SELECT gen_random_uuid(), '#{now}', u.id, '#{bid}', #{BlackStack::Scraper::Movement::TYPE_PAYOUT.to_s}, -(u.total_earning-u.total_payouts)
+        FROM \"user\" u
+        WHERE u.id IN (#{uids.join(',')})
+        AND u.total_earning-u.total_payouts > 0
+    "
+    DB.execute(q)
+    # update total_earnings and total_payouts
+    BlackStack::Scraper::User.update_scraping_stats(uids)
+    # redirect on success
+    redirect "/monitoring/scrapers?msg=Payout+Restored"
+rescue => e
+    redirect "/monitoring/scrapers?err=Error+Restoring+Payout (#{CGI.escape(e.message)})"
+end
+%>
