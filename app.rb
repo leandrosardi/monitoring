@@ -54,6 +54,23 @@ get '/monitoring/agency/campaigns', :auth => true do
     erb :"/extensions/monitoring/views/campaigns", :layout => :'/views/layouts/core'
 end
 
+# TODO: move this to the agency extension
 get '/monitoring/agency/capacity', :auth => true do
     erb :"/extensions/monitoring/views/capacity", :layout => :'/views/layouts/core'
+end
+
+get '/monitoring/agency/scrapers', :auth => true do
+    erb :"/extensions/scraper/views/dashboard", :layout => :'/views/layouts/core'
+end
+
+get '/monitoring/agency/filter_payout', :auth => true do
+    erb :"/extensions/scraper/views/filter_payout"
+end
+
+get '/monitoring/agency/addresses', :auth => true do
+    erb :"/extensions/emails/views/addresses", :layout => :'/views/layouts/core'
+end
+
+get '/monitoring/agency/unibox', :auth => true do
+    erb :"/extensions/emails/views/unibox", :layout => :'/views/layouts/core'
 end

@@ -1,33 +1,43 @@
 <%
-search_keyword = @login.user.preference('monitoring.agency.accounts.search_keyword', '', params[:search_keyword])
-search_premium = @login.user.preference('monitoring.agency.accounts.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
-selected_ids = @login.user.preference('monitoring.agency.accounts.selected_ids', '', nil)
+bgcolor='rgb(225,225,225)'
+search_keyword = @login.user.preference('monitoring.agency.campaigns.search_keyword', '', params[:search_keyword])
+search_premium = @login.user.preference('monitoring.agency.campaigns.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
+search_on = @login.user.preference('monitoring.agency.campaigns.search_on', false, params[:search_on].nil? ? nil : params[:search_on].to_s == 'true')
+selected_ids = @login.user.preference('monitoring.agency.campaigns.selected_ids', '', nil)
 ids = selected_ids.split(',')
 
 all = "
 select 
-	a.id,
-	a.name as account_name, 
+    a.id,
     u.id as id_user,
-	u.email as user_email,
-    u.name as user_name, 
-	a.premium,
-	--c.name,
-	sum(coalesce(t.stat_sents,0)) as sents,
-	sum(coalesce(t.stat_positive_replies,0)) as positive_replies,
-	count(distinct s.id) as active_subscriptions,
-	-coalesce(b1.credits,0) as leads_credits, 
-	-coalesce(b2.credits,0) as emails_credits
+	a.name as account_name, 
+    a.premium,
+	u.email, 
+	c.name as campaign_name,
+	max(f.status) as status, 
+
+    c.stat_left as left,
+	sum(t.stat_sents) as sents,
+	sum(t.stat_positive_replies) as positive_replies,
+	
+	o.name as order_name,
+	o.dfyl_stat_search_leads,
+	o.dfyl_stat_progress,
+	o.dfyl_stat_scraped_leads,
+	o.dfyl_stat_leads_appended
 	
 from account a 
 join \"user\" u on (a.id=u.id_account and u.id=a.id_user_to_contact)
-left join \"subscription\" s on (a.id=s.id_account and s.active=true)
-left join balance b1 on (a.id=b1.id_account and b1.service_code='leads')
-left join balance b2 on (a.id=b2.id_account and b2.service_code='deliveries')
 
-left join \"user\" v on a.id=v.id_account
-left join eml_campaign c on ( v.id=c.id_user )
+/*left*/ join \"user\" v on a.id=v.id_account
+/*left*/ join eml_campaign c on ( v.id=c.id_user )
+left join eml_followup f on c.id=f.id_campaign
 left join eml_timeline t on ( c.id=t.id_campaign and t.create_time>'2023-01-01' )
+
+
+left join fl_export e on e.id=c.id_export
+left join fl_search h on h.id=e.id_search 
+left join scr_order o on o.id=h.id_order 
 
 where 1=1
 "
@@ -37,7 +47,8 @@ all += "
         lower(a.name) like '%#{search_keyword.downcase.to_sql}%' or
         lower(u.email) like '%#{search_keyword.downcase.to_sql}%' or
         lower(u.name) like '%#{search_keyword.downcase.to_sql}%' or
-        lower(u.phone) like '%#{search_keyword.downcase.to_sql}%' 
+        lower(u.phone) like '%#{search_keyword.downcase.to_sql}%' or 
+        lower(c.name) like '%#{search_keyword.downcase.to_sql}%'
     )
 " unless search_keyword.empty?
 
@@ -46,7 +57,26 @@ all += "
 " unless !search_premium
 
 all += "
-group by a.id, a.name, u.id, u.name, u.email, a.create_time, b1.credits, b2.credits, a.premium --, c.name
+group by 
+    a.id,
+    u.id,
+	a.name, 
+    a.premium,
+	u.email, 
+	c.name, 
+    c.stat_left,
+	o.name,
+	o.dfyl_stat_search_leads,
+	o.dfyl_stat_progress,
+	o.dfyl_stat_scraped_leads, 
+	o.dfyl_stat_leads_appended
+"
+
+all += "
+having max(f.status) = #{BlackStack::Emails::Campaign::STATUS_ON}
+" if search_on
+
+all += "
 order by a.name asc
 "
 
@@ -82,11 +112,11 @@ q = "
 <div class="mynavbar mysticky">
 	<section class="row-fluid">	
 		<div class="span6">
-		    <%=nav3("Monotoring", "/monitoring", "Agency", "/monitoring/agency", "Accounts")%>
+		    <%=nav3("Monotoring", "/monitoring", "Agency", "/monitoring/agency", "Campaigns")%>
 		</div>
 		<div class="span6" style='text-align:right;'>
             <div class="pull-right">
-                <form action="/monitoring/agency/accounts" method="get">
+                <form action="/monitoring/agency/campaigns" method="get">
                     <div class="span8">
                         <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
                     </div>
@@ -97,13 +127,8 @@ q = "
             </div>    
 
             <div class='btn-group'>
-                <button class='btn btn-blue' id='allow_premium' name='allow_premium' data-rows-group-id='accounts' title='Turn Premium ON'><i class='icon-star'></i></button>
-                <button class='btn btn-blue' id='disallow_premium' name='disallow_premium' data-rows-group-id='accounts' title='Turn Premium OFF'><i class='icon-star-empty'></i></button>
-                <button class='btn btn-blue' id='add_bonus' name='add_bonus' data-rows-group-id='accounts' data-toggle="modal" id='open_add_bonus_modal' data-target=".add_bonus" title='Add/Remove Bonus Credits'><i class='icon-gift'></i></button>
-            </div>
-
-            <div class='btn-group'>
-                <a href='/monitoring/agency/accounts?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
+                <a href='/monitoring/agency/campaigns?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
+                <a href='/monitoring/agency/campaigns?search_on=<%=search_on ? "false" : "true"%>' class='btn btn-blue <%=search_on ? "active" : ""%>' id='on_only' name='on_only' title='Show Active Campaigns Only'><i class='icon-ok'></i></a>
             </div>
         </div>
 	</section>
@@ -118,14 +143,29 @@ q = "
             <thead>
                 <th style="width:24px;"><input type='checkbox' class='select-all-rows' data-input-id='aids' data-rows-group-id='accounts'></th>
                 <th style="width:auto;">Account<br/>Name</th>
+                <th style="width:24px;"><i class='icon-star'></i></th>
+                <!--
                 <th style="width:125px;">User<br/>Name</th>
                 <th style="width:125px;">User<br/>Email</th>
-                <th style="width:48px;">Premium</th>
-                <th style="width:55px;text-align:right;">Emails<br/>Sent</th>
-                <th style="width:55px;text-align:right;">Replies<br/>Received</th>
+                -->
+                <th style="width:125px;background-color:<%=bgcolor%>;">Campaign<br/>Name</th>
+                <th style="width:48px;background-color:<%=bgcolor%>;">Campaign<br/>Status</th>
+                <th style="width:45px;text-align:right;background-color:<%=bgcolor%>;">Left</th>
+                <th style="width:45px;text-align:right;background-color:<%=bgcolor%>;">Sent</th>
+                <th style="width:55px;text-align:right;background-color:<%=bgcolor%>;">+Replies</th>
+
+                <!--
                 <th style="width:55px;text-align:right;">Active<br/>Subscr.</th>
                 <th style="width:55px;text-align:right;">Lead<br/>Credits</th>
                 <th style="width:55px;text-align:right;">Email<br/>Credits</th>
+                -->
+
+                <th style="width:125px;">Order<br/>Name</th>
+                <th style="width:75px;text-align:right;">Search<br/>Scope</th>
+                <th style="width:45px;text-align:right;">Search<br/>%</th>
+                <th style="width:55px;text-align:right;">Leads<br/>Scraped</th>
+                <th style="width:55px;text-align:right;">Leads<br/>Appended</th>
+
                 <th style="width:16px;"><!-- access link --></th>
             </thead>
             <tbody>
@@ -140,21 +180,23 @@ q = "
                         <%=row[:account_name].to_s.encode_html%><br/>
                         <span style='color:gray;'><%=row[:id].to_s.encode_html%></span>
                     </td>
-                    <td class="fix" title="<%=row[:user_name].to_s.encode_html%>">
-                        <%=row[:user_name].to_s.encode_html%>
-                    </td>
-                    <td class="fix" title="<%=row[:user_email].to_s.encode_html%>">
-                        <a href='mailto:<%=row[:user_email].to_s.encode_html%>'><%=row[:user_email].to_s.encode_html%></a>
-                    </td>
                     <td class="fix" title="<%=row[:premium].to_s.encode_html%>">
                         <%=row[:premium] ? '<i class="icon-ok" style="color:blue"></i>' : '<i class="icon-remove" style="color:red"></i>'%>
                     </td>
+                    <td class="fix" title="<%=row[:campaign_name].to_s.encode_html%>" style='background-color:<%=bgcolor%>;'>
+                        <%=row[:campaign_name].to_s.encode_html%>
+                    </td>
+                    <td class="fix" title="<%=BlackStack::Emails::Campaign.status_name(row[:status].to_i)%>" style='background-color:<%=bgcolor%>;'>
+                        <span class='badge badge-<%=BlackStack::Emails::Campaign.status_color(row[:status].to_i)%>'><%=BlackStack::Emails::Campaign.status_name(row[:status].to_i)%></span>
+                    </td>
 
-
-                    <td class="fix" title="<%=row[:sents].to_i.to_label.encode_html%>" style="text-align:right;">
+                    <td class="fix" title="<%=row[:left].to_i.to_label.encode_html%>" style="text-align:right;background-color:<%=bgcolor%>;">
+                        <%=row[:left].to_i.to_label%>
+                    </td>
+                    <td class="fix" title="<%=row[:sents].to_i.to_label.encode_html%>" style="text-align:right;background-color:<%=bgcolor%>;">
                         <%=row[:sents].to_i.to_label%>
                     </td>
-                    <td class="fix" title="<%=row[:positive_replies].to_i.to_label.encode_html%>" style="text-align:right;">
+                    <td class="fix" title="<%=row[:positive_replies].to_i.to_label.encode_html%>" style="text-align:right;background-color:<%=bgcolor%>;">
                         <%=row[:positive_replies].to_i.to_label%><br/>
                         <%
                         # canculate the percentage of positive replies, with 4 decimals
@@ -165,17 +207,42 @@ q = "
                         end
                         %>
                         <span style='color:gray;'><%=percent.to_s.encode_html%>%</span>
+                    </td>
 
+                    <td class="fix" title="<%=row[:order_name].to_s.encode_html%>">
+                        <%=row[:order_name].to_s.encode_html%>
                     </td>
-                    <td class="fix" title="<%=row[:active_subscriptions].to_i.to_label.encode_html%>" style="text-align:right;">
-                        <%=row[:active_subscriptions].to_i.to_label%>
+                    <td class="fix" title="<%=row[:dfyl_stat_search_leads].to_i.to_label.encode_html%>" style="text-align:right;">
+                        <%=row[:dfyl_stat_search_leads].to_i.to_label%>
                     </td>
+                    <td class="fix" title="<%=row[:dfyl_stat_progress].to_i.to_label.encode_html%>" style="text-align:right;">
+                        <%=row[:dfyl_stat_progress].to_i.to_label%>%
+                    </td>
+                    <td class="fix" title="<%=row[:dfyl_stat_scraped_leads].to_i.to_label.encode_html%>" style="text-align:right;">
+                        <%=row[:dfyl_stat_scraped_leads].to_i.to_label%><br/>
+                        <span style='color:gray;'><%=row[:dfyl_stat_progress].to_i.to_label%>%</span>
+                    </td>
+                    <td class="fix" title="<%=row[:dfyl_stat_leads_appended].to_i.to_label.encode_html%>" style="text-align:right;">
+                        <%=row[:dfyl_stat_leads_appended].to_i.to_label%><br/>
+                        <%
+                        # calculate the percentage of leads appended, with 4 decimals
+                        percent = 0
+                        if row[:dfyl_stat_scraped_leads].to_i > 0
+                            percent = (row[:dfyl_stat_leads_appended].to_f / row[:dfyl_stat_scraped_leads].to_f) * 100
+                            percent = percent.round(4)
+                        end
+                        %>
+                        <span style='color:gray;'><%=percent.to_i.to_label%>%</span>
+                    </td>
+
+                    <!--
                     <td class="fix" title="<%=row[:leads_credits].to_i.to_label.encode_html%>" style="text-align:right;">
                         <%=row[:leads_credits].to_i.to_label%>
                     </td>
                     <td class="fix" title="<%=row[:emails_credits].to_i.to_label.encode_html%>" style="text-align:right;">
                         <%=row[:emails_credits].to_i.to_label%>
                     </td>
+                    -->
 
                     <td class="fix" title="Account Access Link. Paste it into another browser." style='text-align:center;'>
                         <button class='btn btn-link secret_login' name='secret_login'><i class="icon-copy"></i></button>
@@ -232,14 +299,6 @@ q = "
         selectRowsJs.init();
         drawPagination($(".pagination"), <%=page_number%>, <%=total_pages%>);
 
-        $('#allow_premium').click(function() {
-            window.location.href = '/monitoring/agency/filter_allow_premium?aids=' + $('#aids').val();
-        });
-
-        $('#disallow_premium').click(function() {
-            window.location = '/monitoring/agency/filter_disallow_premium?aids=' + $('#aids').val();
-        });
-
         $('.secret_login').click(function() {
             var uid = $(this).closest('tr').find('.select-row').data('uid');
             secret_login_url = '<%=CS_HOME_WEBSITE%>/monitoring/filter_secret_login?lid=<%=@login.id%>&uid=' + uid;
@@ -256,15 +315,5 @@ q = "
                 icon.addClass('icon-copy');
             }, 1000);
         });
-
-        // submit form #edit_addresses_form when button #edit_addresses_button is clicked
-        $('#add_bonus_button').click(function() {
-            $('#add_bonus_form').find('#selected_ids').val($('#aids').val());
-            $('#add_bonus_form').submit();
-        });
-
-        // hide modals when show the page
-        // use the .hide() method, in order to don't get the modal blocking other elements behind them.
-        $('.add_bonus').hide();
     });
 </script>
