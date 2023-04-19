@@ -6,7 +6,7 @@ begin
 
     if lead_credits != 0 || email_credits != 0
         if lead_credits != 0
-            desc = lead_credits > 0 ? "Lead Credits Added" : "Lead Credits Removed"
+            desc = lead_credits < 0 ? "Lead Credits Added" : "Lead Credits Removed"
             q = "
                 INSERT INTO movement
                 (id, id_account, create_time, type, id_user_creator, description, paypal1_amount, bonus_amount, amount, credits, profits_amount, service_code)
