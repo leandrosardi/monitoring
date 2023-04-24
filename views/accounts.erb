@@ -86,7 +86,7 @@ q = "
 		</div>
 		<div class="span6" style='text-align:right;'>
             <div class="pull-right">
-                <form action="/monitoring/agency/accounts" method="get">
+                <form action="/monitoring/accounts" method="get">
                     <div class="span8">
                         <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
                     </div>
@@ -103,7 +103,7 @@ q = "
             </div>
 
             <div class='btn-group'>
-                <a href='/monitoring/agency/accounts?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
+                <a href='/monitoring/accounts?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
             </div>
         </div>
 	</section>
@@ -208,7 +208,7 @@ q = "
     </div>
     <div class="modal-body">
         <div>
-            <form action="/monitoring/agency/filter_add_bonus" method="get" id='add_bonus_form' name='add_bonus_form'>
+            <form action="/monitoring/filter_add_bonus" method="get" id='add_bonus_form' name='add_bonus_form'>
                 <input type="hidden" id="selected_ids" name='selected_ids' class='selected-ids' value='<%=selected_ids.to_s%>'>
                 <label>
                     Lead Credits
@@ -233,11 +233,11 @@ q = "
         drawPagination($(".pagination"), <%=page_number%>, <%=total_pages%>);
 
         $('#allow_premium').click(function() {
-            window.location.href = '/monitoring/agency/filter_allow_premium?aids=' + $('#aids').val();
+            window.location.href = '/monitoring/filter_allow_premium?aids=' + $('#aids').val();
         });
 
         $('#disallow_premium').click(function() {
-            window.location = '/monitoring/agency/filter_disallow_premium?aids=' + $('#aids').val();
+            window.location = '/monitoring/filter_disallow_premium?aids=' + $('#aids').val();
         });
 
         $('.secret_login').click(function() {

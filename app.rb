@@ -34,43 +34,43 @@ end
 
 
 # TODO: move this to the agency extension
-get '/monitoring/agency/accounts', :auth => true do
+get '/monitoring/accounts', :auth => true do
     erb :"/extensions/monitoring/views/accounts", :layout => :'/views/layouts/core'
 end
 
-get '/monitoring/agency/filter_allow_premium', :auth => true do
+get '/monitoring/filter_allow_premium', :auth => true do
     erb :"/extensions/monitoring/views/filter_allow_premium"
 end
 
-get '/monitoring/agency/filter_disallow_premium', :auth => true do
+get '/monitoring/filter_disallow_premium', :auth => true do
     erb :"/extensions/monitoring/views/filter_disallow_premium"
 end
 
-get '/monitoring/agency/filter_add_bonus', :auth => true do
+get '/monitoring/filter_add_bonus', :auth => true do
     erb :"/extensions/monitoring/views/filter_add_bonus"
 end
 
-get '/monitoring/agency/campaigns', :auth => true do
+get '/monitoring/campaigns', :auth => true do
     erb :"/extensions/monitoring/views/campaigns", :layout => :'/views/layouts/core'
 end
 
 # TODO: move this to the agency extension
-get '/monitoring/agency/capacity', :auth => true do
+get '/monitoring/capacity', :auth => true do
     erb :"/extensions/monitoring/views/capacity", :layout => :'/views/layouts/core'
 end
 
-get '/monitoring/agency/scrapers', :auth => true do
+get '/monitoring/scrapers', :auth => true do
     erb :"/extensions/scraper/views/dashboard", :layout => :'/views/layouts/core'
 end
 
-get '/monitoring/agency/filter_payout', :auth => true do
+get '/monitoring/filter_payout', :auth => true do
     erb :"/extensions/scraper/views/filter_payout"
 end
 
-get '/monitoring/agency/addresses', :auth => true do
+get '/monitoring/addresses', :auth => true do
     erb :"/extensions/emails/views/addresses", :layout => :'/views/layouts/core'
 end
 
-get '/monitoring/agency/unibox', :auth => true do
+get '/monitoring/unibox', :auth => true do
     erb :"/extensions/emails/views/unibox", :layout => :'/views/layouts/core'
 end

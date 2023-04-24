@@ -32,4 +32,4 @@ _(write screens workflow here, describing calls to AJAX and Filters)_
 
 ## Disclaimer
 
-The logo has been taken from [here](https://www.shareicon.net/technology-monitors-connection-screens-computers-network-722122).
+The logo has been taken from [here](https://icons8.com/icon/ay4lYdOUt1Vd/geometric-figures).

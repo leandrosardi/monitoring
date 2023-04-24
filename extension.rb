@@ -1,7 +1,8 @@
 BlackStack::Extensions::add ({
     # descriptive name and descriptor
     :name => 'monitoring',
-    
+    :large_name => 'Infrastructure & Users Monitoring',
+
     # Write a description here. It will be shown in the main dashboard of your MySaaS project.
     :description => 'MySaaS extension for manage users and infrastructure. ',
 

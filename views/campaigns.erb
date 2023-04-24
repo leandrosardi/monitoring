@@ -1,5 +1,4 @@
 <%
-bgcolor='rgb(225,225,225)'
 search_keyword = @login.user.preference('monitoring.agency.campaigns.search_keyword', '', params[:search_keyword])
 search_premium = @login.user.preference('monitoring.agency.campaigns.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
 search_on = @login.user.preference('monitoring.agency.campaigns.search_on', false, params[:search_on].nil? ? nil : params[:search_on].to_s == 'true')
@@ -116,7 +115,7 @@ q = "
 		</div>
 		<div class="span6" style='text-align:right;'>
             <div class="pull-right">
-                <form action="/monitoring/agency/campaigns" method="get">
+                <form action="/monitoring/campaigns" method="get">
                     <div class="span8">
                         <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
                     </div>
@@ -127,8 +126,8 @@ q = "
             </div>    
 
             <div class='btn-group'>
-                <a href='/monitoring/agency/campaigns?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
-                <a href='/monitoring/agency/campaigns?search_on=<%=search_on ? "false" : "true"%>' class='btn btn-blue <%=search_on ? "active" : ""%>' id='on_only' name='on_only' title='Show Active Campaigns Only'><i class='icon-ok'></i></a>
+                <a href='/monitoring/campaigns?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
+                <a href='/monitoring/campaigns?search_on=<%=search_on ? "false" : "true"%>' class='btn btn-blue <%=search_on ? "active" : ""%>' id='on_only' name='on_only' title='Show Active Campaigns Only'><i class='icon-ok'></i></a>
             </div>
         </div>
 	</section>
@@ -148,11 +147,11 @@ q = "
                 <th style="width:125px;">User<br/>Name</th>
                 <th style="width:125px;">User<br/>Email</th>
                 -->
-                <th style="width:125px;background-color:<%=bgcolor%>;">Campaign<br/>Name</th>
-                <th style="width:48px;background-color:<%=bgcolor%>;">Campaign<br/>Status</th>
-                <th style="width:45px;text-align:right;background-color:<%=bgcolor%>;">Left</th>
-                <th style="width:45px;text-align:right;background-color:<%=bgcolor%>;">Sent</th>
-                <th style="width:55px;text-align:right;background-color:<%=bgcolor%>;">+Replies</th>
+                <th style="width:125px;">Campaign<br/>Name</th>
+                <th style="width:48px;">Campaign<br/>Status</th>
+                <th style="width:45px;text-align:right;">Left</th>
+                <th style="width:45px;text-align:right;">Sent</th>
+                <th style="width:55px;text-align:right;">+Replies</th>
 
                 <!--
                 <th style="width:55px;text-align:right;">Active<br/>Subscr.</th>
@@ -183,20 +182,20 @@ q = "
                     <td class="fix" title="<%=row[:premium].to_s.encode_html%>">
                         <%=row[:premium] ? '<i class="icon-ok" style="color:blue"></i>' : '<i class="icon-remove" style="color:red"></i>'%>
                     </td>
-                    <td class="fix" title="<%=row[:campaign_name].to_s.encode_html%>" style='background-color:<%=bgcolor%>;'>
+                    <td class="fix" title="<%=row[:campaign_name].to_s.encode_html%>">
                         <%=row[:campaign_name].to_s.encode_html%>
                     </td>
-                    <td class="fix" title="<%=BlackStack::Emails::Campaign.status_name(row[:status].to_i)%>" style='background-color:<%=bgcolor%>;'>
+                    <td class="fix" title="<%=BlackStack::Emails::Campaign.status_name(row[:status].to_i)%>">
                         <span class='badge badge-<%=BlackStack::Emails::Campaign.status_color(row[:status].to_i)%>'><%=BlackStack::Emails::Campaign.status_name(row[:status].to_i)%></span>
                     </td>
 
-                    <td class="fix" title="<%=row[:left].to_i.to_label.encode_html%>" style="text-align:right;background-color:<%=bgcolor%>;">
+                    <td class="fix" title="<%=row[:left].to_i.to_label.encode_html%>" style="text-align:right;">
                         <%=row[:left].to_i.to_label%>
                     </td>
-                    <td class="fix" title="<%=row[:sents].to_i.to_label.encode_html%>" style="text-align:right;background-color:<%=bgcolor%>;">
+                    <td class="fix" title="<%=row[:sents].to_i.to_label.encode_html%>" style="text-align:right;">
                         <%=row[:sents].to_i.to_label%>
                     </td>
-                    <td class="fix" title="<%=row[:positive_replies].to_i.to_label.encode_html%>" style="text-align:right;background-color:<%=bgcolor%>;">
+                    <td class="fix" title="<%=row[:positive_replies].to_i.to_label.encode_html%>" style="text-align:right;">
                         <%=row[:positive_replies].to_i.to_label%><br/>
                         <%
                         # canculate the percentage of positive replies, with 4 decimals
@@ -275,7 +274,7 @@ q = "
     </div>
     <div class="modal-body">
         <div>
-            <form action="/monitoring/agency/filter_add_bonus" method="get" id='add_bonus_form' name='add_bonus_form'>
+            <form action="/monitoring/filter_add_bonus" method="get" id='add_bonus_form' name='add_bonus_form'>
                 <input type="hidden" id="selected_ids" name='selected_ids' class='selected-ids' value='<%=selected_ids.to_s%>'>
                 <label>
                     Lead Credits

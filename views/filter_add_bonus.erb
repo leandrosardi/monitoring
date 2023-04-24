@@ -35,8 +35,8 @@ begin
         BlackStack::I2P::Account.update_balance_snapshot(aids)
     end
 
-    redirect "/monitoring/agency/accounts?msg=Bonus+Added"
+    redirect "/monitoring/accounts?msg=Bonus+Added"
 rescue => e
-    redirect "/monitoring/agency/accounts?err=Error+Adding+Bonus (#{CGI.escape(e.message)})"
+    redirect "/monitoring/accounts?err=Error+Adding+Bonus (#{CGI.escape(e.message)})"
 end
 %>
