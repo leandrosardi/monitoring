@@ -1,5 +1,5 @@
 <%
-search_keyword = @login.user.preference('monitoring.agency.accounts.search_keyword', '', params[:search_keyword])
+search_keyword = @login.user.preference('monitoring.agency.accounts.search_keyword', '', params[:search_keyword]).strip
 search_premium = @login.user.preference('monitoring.agency.accounts.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
 selected_ids = @login.user.preference('monitoring.agency.accounts.selected_ids', '', nil)
 ids = selected_ids.split(',')
@@ -19,7 +19,7 @@ where 1=1
 
 all += " 
     and (
-        lower(a.name) likeAccount '%#{search_keyword.downcase.to_sql}%' or
+        lower(a.name) like '%#{search_keyword.downcase.to_sql}%' or
         lower(u.email) like '%#{search_keyword.downcase.to_sql}%' or
         lower(u.name) like '%#{search_keyword.downcase.to_sql}%' or
         lower(u.phone) like '%#{search_keyword.downcase.to_sql}%' 

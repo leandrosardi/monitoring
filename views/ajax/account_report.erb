@@ -6,7 +6,7 @@ begin
     b = BlackStack::I2P::Account.where(:id=>aid).first
     c = BlackStack::Scraper::Account.where(:id=>aid).first
     d = BlackStack::Emails::Account.where(:id=>aid).first
-
+    
     # Balance
     dt = b.deadline
     if dt
@@ -44,19 +44,19 @@ begin
 
     # Leads Scraping
     w = c.orders.size
-    x = c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i < 100 }.size
-    y = c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i >= 100 }.size
-    z = c.orders.select { |o| !o.status }.size
+    x = c.orders.select { |o| o.dfyl_id_parent.nil? && o.status && o.dfyl_stat_progress.to_i < 100 }.size
+    y = c.orders.select { |o| o.dfyl_id_parent.nil? && o.status && o.dfyl_stat_progress.to_i >= 100 }.size
+    z = c.orders.select { |o| o.dfyl_id_parent.nil? && !o.status }.size
     return_message[:active_orders] = {}
     if w == 0 # no orders at all
         return_message[:active_orders][:value] = "<i class='icon-remove'></i>"
         return_message[:active_orders][:color] = 'gray'
         return_message[:active_orders][:title] = 'no orders at all'
     elsif x > 0 # active and not-completed orders
-        avg = (c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i < 100 }.map { |o| o.dfyl_stat_progress.to_i }.sum.to_f / x.to_f).to_i
+        avg = (c.orders.select { |o| o.dfyl_id_parent.nil? && o.status && o.dfyl_stat_progress.to_i < 100 }.map { |o| o.dfyl_stat_progress.to_i }.sum.to_f / x.to_f).to_i
         return_message[:active_orders][:value] = "#{avg}%"
         return_message[:active_orders][:color] = 'green'
-        return_message[:active_orders][:title] = 'orders in progress'
+        return_message[:active_orders][:title] = "orders in progress at #{avg}%"
     elsif y > 0 # active and completed orders
         return_message[:active_orders][:value] = "<i class='icon-ok'></i>"
         return_message[:active_orders][:color] = 'blue'
@@ -67,7 +67,7 @@ begin
         return_message[:active_orders][:title] = 'orders paused'
     end
 
-    w = c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i < 100 }
+    w = c.orders.select { |o| o.dfyl_id_parent.nil? && o.status && o.dfyl_stat_progress.to_i < 100 }
     x = w.size
     y = w.map { |o| o.dfyl_stat_appending_rate.to_f }.sum
     z = x > 0 ? (y.to_f / x.to_f).to_i : 0
@@ -101,6 +101,7 @@ begin
         return_message[:active_campaigns][:title] = 'no campaigns at all'
     elsif x > 0 # active and not-completed campaigns
         return_message[:active_campaigns][:value] = x.to_label
+        return_message[:active_campaigns][:color] = 'green'
         return_message[:active_campaigns][:title] = 'campaigns in progress'
     elsif y > 0 # active and completed campaigns
         return_message[:active_campaigns][:value] = "<i class='icon-ok'></i>"
