@@ -251,7 +251,75 @@ q = "
         $('.add_bonus').hide();
 
         // ajax to /monitoring/account_report after page load
-        tr = $('tr.account').first()
+        // build array of ids
+        var datas = [];
+        $('tr.account').each(function() {
+            datas.push({ id_account: $(this).attr('data-id') });
+        });
+        // ajax call using progress.js
+        handler = progressJs.start({
+            url: '/ajax/monitoring/account_report.json',
+            type: 'GET',
+            datas: datas,
+            delay_between_calls: 10, // 10 milliseconds
+            success: function(j, data, response) {
+                response = JSON.parse(response);
+                if(response.status == 'success') {
+                    // get tr element
+                    tr = $('tr.account[data-id="'+data.id_account+'"]');
+    
+                    // balance
+                    td = tr.find('td.deadline'); 
+                    td.html(response.deadline.value);
+                    td.attr('title', response.deadline.value);
+                    td.css('color', response.deadline.color);
+    
+                    td = tr.find('td.leads_credits'); 
+                    td.html(response.leads_credits.value);
+                    td.attr('title', response.leads_credits.value);
+                    td.css('color', response.leads_credits.color);
+    
+                    td = tr.find('td.email_credits'); 
+                    td.html(response.email_credits.value);
+                    td.attr('title', response.email_credits.value);
+                    td.css('color', response.email_credits.color);
+    
+                    // active orders
+                    td = tr.find('td.active_orders');
+                    td.html('<span class="badge badge-'+response.active_orders.color+'" title="'+response.active_orders.title+'">'+response.active_orders.value+'</span>');
+    
+                    td = tr.find('td.average_appending_rate');
+                    td.html(response.average_appending_rate.value);
+                    td.attr('title', response.average_appending_rate.value);
+                    td.css('color', response.average_appending_rate.color);
+    
+                    td = tr.find('td.daily_pages_needed');
+                    td.html(response.daily_pages_needed.value);
+                    td.attr('title', response.daily_pages_needed.value);
+                    td.css('color', response.daily_pages_needed.color);
+    
+                    // active campaigns
+                    td = tr.find('td.active_campaigns');
+                    td.html('<span class="badge badge-'+response.active_campaigns.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.value+'</span>');
+    
+                    td = tr.find('td.average_positive_responses_rate');
+                    td.html(response.average_positive_responses_rate.value);
+                    td.attr('title', response.average_positive_responses_rate.value);
+                    td.css('color', response.average_positive_responses_rate.color);
+    
+                    td = tr.find('td.daily_deliveries_needed');
+                    td.html(response.daily_deliveries_needed.value);
+                    td.attr('title', response.daily_deliveries_needed.value);
+                    td.css('color', response.daily_deliveries_needed.color);    
+                } else {
+                    alert(data.status);
+                }
+            },
+            error: function(j, data) {
+                alert('error');
+            },
+        });
+/*
         $.ajax({
             url: '/ajax/monitoring/account_report.json',
             type: 'POST',
@@ -261,49 +329,6 @@ q = "
             success: function(data) {
                 response = JSON.parse(data);
                 if(response.status == 'success') {
-                    // balance
-                    td = tr.find('td.deadline'); 
-                    td.html(response.deadline.value);
-                    td.attr('title', response.deadline.value);
-                    td.css('color', response.deadline.color);
-
-                    td = tr.find('td.leads_credits'); 
-                    td.html(response.leads_credits.value);
-                    td.attr('title', response.leads_credits.value);
-                    td.css('color', response.leads_credits.color);
-
-                    td = tr.find('td.email_credits'); 
-                    td.html(response.email_credits.value);
-                    td.attr('title', response.email_credits.value);
-                    td.css('color', response.email_credits.color);
-
-                    // active orders
-                    td = tr.find('td.active_orders');
-                    td.html('<span class="badge badge-'+response.active_orders.color+'" title="'+response.active_orders.title+'">'+response.active_orders.value+'</span>');
-
-                    td = tr.find('td.average_appending_rate');
-                    td.html(response.average_appending_rate.value);
-                    td.attr('title', response.average_appending_rate.value);
-                    td.css('color', response.average_appending_rate.color);
-
-                    td = tr.find('td.daily_pages_needed');
-                    td.html(response.daily_pages_needed.value);
-                    td.attr('title', response.daily_pages_needed.value);
-                    td.css('color', response.daily_pages_needed.color);
-
-                    // active campaigns
-                    td = tr.find('td.active_campaigns');
-                    td.html('<span class="badge badge-'+response.active_campaigns.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.value+'</span>');
-
-                    td = tr.find('td.average_positive_responses_rate');
-                    td.html(response.average_positive_responses_rate.value);
-                    td.attr('title', response.average_positive_responses_rate.value);
-                    td.css('color', response.average_positive_responses_rate.color);
-
-                    td = tr.find('td.daily_deliveries_needed');
-                    td.html(response.daily_deliveries_needed.value);
-                    td.attr('title', response.daily_deliveries_needed.value);
-                    td.css('color', response.daily_deliveries_needed.color);
 
                 } else {
                     alert(data.status);
@@ -313,5 +338,6 @@ q = "
                 alert(data.status);
             }
         });
+*/
     });
 </script>

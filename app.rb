@@ -76,6 +76,9 @@ get '/monitoring/unibox', :auth => true do
 end
 
 # AJAX
+get '/ajax/monitoring/account_report.json', :auth => true, :agent => /(.*)/ do
+    erb :'/extensions/monitoring/views/ajax/account_report'
+end
 post '/ajax/monitoring/account_report.json', :auth => true, :agent => /(.*)/ do
     erb :'/extensions/monitoring/views/ajax/account_report'
 end

@@ -44,8 +44,8 @@ begin
 
     # Leads Scraping
     w = c.orders.size
-    x = c.orders.select { |o| o.status && o.dfyl_stat_progress < 100 }.size
-    y = c.orders.select { |o| o.status && o.dfyl_stat_progress >= 100 }.size
+    x = c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i < 100 }.size
+    y = c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i >= 100 }.size
     z = c.orders.select { |o| !o.status }.size
     return_message[:active_orders] = {}
     if w == 0 # no orders at all
@@ -53,7 +53,7 @@ begin
         return_message[:active_orders][:color] = 'gray'
         return_message[:active_orders][:title] = 'no orders at all'
     elsif x > 0 # active and not-completed orders
-        avg = (c.orders.select { |o| o.status && o.dfyl_stat_progress < 100 }.map { |o| o.dfyl_stat_progress }.sum.to_f / x.to_f).to_i
+        avg = (c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i < 100 }.map { |o| o.dfyl_stat_progress.to_i }.sum.to_f / x.to_f).to_i
         return_message[:active_orders][:value] = "#{avg}%"
         return_message[:active_orders][:color] = 'green'
         return_message[:active_orders][:title] = 'orders in progress'
@@ -67,7 +67,7 @@ begin
         return_message[:active_orders][:title] = 'orders paused'
     end
 
-    w = c.orders.select { |o| o.status && o.dfyl_stat_progress < 100 }
+    w = c.orders.select { |o| o.status && o.dfyl_stat_progress.to_i < 100 }
     x = w.size
     y = w.map { |o| o.dfyl_stat_appending_rate.to_f }.sum
     z = x > 0 ? (y.to_f / x.to_f).to_i : 0
@@ -91,8 +91,8 @@ begin
 
     # Emails Deliveries
     w = d.campaigns.size
-    x = d.campaigns.select { |o| o.status==1 && o.stat_left > 0 }.size
-    y = d.campaigns.select { |o| o.status==1 && o.stat_left <= 0 }.size
+    x = d.campaigns.select { |o| o.status==1 && o.stat_left.to_i > 0 }.size
+    y = d.campaigns.select { |o| o.status==1 && o.stat_left.to_i <= 0 }.size
     z = d.campaigns.select { |o| o.status!=1 }.size
     return_message[:active_campaigns] = {}
     if w == 0 # no campaigns at all
@@ -112,8 +112,8 @@ begin
         return_message[:active_campaigns][:title] = 'campaigns paused'
     end
 
-    arr = d.campaigns.select { |o| o.status==1 && o.stat_left > 0 }
-    sent = arr.map { |o| o.stat_sent }.sum.to_f
+    arr = d.campaigns.select { |o| o.status==1 && o.stat_left.to_i > 0 }
+    sent = arr.map { |o| o.stat_sents }.sum.to_f
     pr = arr.map { |o| o.stat_positive_replies }.sum.to_f
     avg = sent==0.0 ? 0.0 : (pr / sent).to_f * 100.to_f
     return_message[:average_positive_responses_rate] = {}
