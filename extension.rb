@@ -35,12 +35,12 @@ BlackStack::Extensions::add ({
         { :label => 'nodes', :icon => :desktop, :screen => :nodes, },
 
         # TODO: Move this to the AGENCY extension
-        { :label => 'accounts', :icon => :group, :screen => :'agency/accounts', },
-        { :label => 'campaigns', :icon => :beaker, :screen => :'agency/campaigns', },
-        { :label => 'capacity', :icon => :dashboard, :screen => :'agency/capacity', },
-        { :label => 'scrapers', :icon => :group, :screen => :'agency/scrapers', },
-        { :label => 'addresses', :icon => :envelope, :screen => :'agency/addresses', },
-        { :label => 'unibox', :icon => :inbox, :screen => :'agency/unibox', },
+        { :label => 'accounts', :icon => :group, :screen => :'accounts', },
+        { :label => 'campaigns', :icon => :beaker, :screen => :'campaigns', },
+        { :label => 'capacity', :icon => :dashboard, :screen => :'capacity', },
+        { :label => 'scrapers', :icon => :group, :screen => :'scrapers', },
+        { :label => 'addresses', :icon => :envelope, :screen => :'addresses', },
+        { :label => 'unibox', :icon => :inbox, :screen => :'unibox', },
     ],
 })
 

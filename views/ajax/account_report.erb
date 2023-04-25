@@ -1,0 +1,150 @@
+<%
+return_message = {}
+begin
+    aid = params['id_account']
+    a = BlackStack::MySaaS::Account.where(:id=>aid).first
+    b = BlackStack::I2P::Account.where(:id=>aid).first
+    c = BlackStack::Scraper::Account.where(:id=>aid).first
+    d = BlackStack::Emails::Account.where(:id=>aid).first
+
+    # Balance
+    dt = b.deadline
+    if dt
+        dt = Time.parse(dt.to_s)
+        days = ((dt-now).to_f / (24 * 60 * 60).to_f).to_i
+        if days < 7
+            color = 'orange'
+        elsif days < 0
+            color = 'red'
+        else
+            color = 'gray'
+        end
+        return_message[:deadline] = {}
+        return_message[:deadline][:value] = "#{days} days"
+        return_message[:deadline][:color] = color
+    else
+        return_message[:deadline] = {}
+        return_message[:deadline][:value] = '-'
+        return_message[:deadline][:color] = 'gray'
+    end
+
+    balance = BlackStack::I2P::Balance.new(b.id, 'leads')
+    balance.calculate
+    balance.save
+    return_message[:leads_credits] = {}
+    return_message[:leads_credits][:value] = b.credits('leads').to_i.to_label
+    return_message[:leads_credits][:color] = b.credits('leads').to_i > 0 ? 'blue' : 'red'
+
+    balance = BlackStack::I2P::Balance.new(b.id, 'deliveries')
+    balance.calculate
+    balance.save
+    return_message[:email_credits] = {}
+    return_message[:email_credits][:value] = b.credits('deliveries').to_i.to_label
+    return_message[:email_credits][:color] = b.credits('deliveries').to_i > 0 ? 'blue' : 'red'
+
+    # Leads Scraping
+    w = c.orders.size
+    x = c.orders.select { |o| o.status && o.dfyl_stat_progress < 100 }.size
+    y = c.orders.select { |o| o.status && o.dfyl_stat_progress >= 100 }.size
+    z = c.orders.select { |o| !o.status }.size
+    return_message[:active_orders] = {}
+    if w == 0 # no orders at all
+        return_message[:active_orders][:value] = "<i class='icon-remove'></i>"
+        return_message[:active_orders][:color] = 'gray'
+        return_message[:active_orders][:title] = 'no orders at all'
+    elsif x > 0 # active and not-completed orders
+        avg = (c.orders.select { |o| o.status && o.dfyl_stat_progress < 100 }.map { |o| o.dfyl_stat_progress }.sum.to_f / x.to_f).to_i
+        return_message[:active_orders][:value] = "#{avg}%"
+        return_message[:active_orders][:color] = 'green'
+        return_message[:active_orders][:title] = 'orders in progress'
+    elsif y > 0 # active and completed orders
+        return_message[:active_orders][:value] = "<i class='icon-ok'></i>"
+        return_message[:active_orders][:color] = 'blue'
+        return_message[:active_orders][:title] = 'orders completed'
+    elsif z > 0 # inactive orders
+        return_message[:active_orders][:value] = "<i class='icon-off'></i>"
+        return_message[:active_orders][:color] = 'red'
+        return_message[:active_orders][:title] = 'orders paused'
+    end
+
+    w = c.orders.select { |o| o.status && o.dfyl_stat_progress < 100 }
+    x = w.size
+    y = w.map { |o| o.dfyl_stat_appending_rate.to_f }.sum
+    z = x > 0 ? (y.to_f / x.to_f).to_i : 0
+    return_message[:average_appending_rate] = {}
+    return_message[:average_appending_rate][:value] = x > 0 ? "#{z}%" : '-'
+    if x > 0
+        return_message[:average_appending_rate][:color] = z < 10 ? 'red' : 'green'
+    else
+        return_message[:average_appending_rate][:color] = 'gray'
+    end
+    
+    row = DB["select pages_per_day from v_dfyl_capacity_needed where id_account = '#{aid}'"].first
+    x = row.nil? ? 0 : row[:pages_per_day].to_i
+    return_message[:daily_pages_needed] = {}
+    return_message[:daily_pages_needed][:value] = row.nil? ? '-' : x.to_label
+    if row
+        return_message[:daily_pages_needed][:color] = x > 200 ? 'orange' : 'blue'
+    else
+        return_message[:daily_pages_needed][:color] = 'gray'
+    end
+
+    # Emails Deliveries
+    w = d.campaigns.size
+    x = d.campaigns.select { |o| o.status==1 && o.stat_left > 0 }.size
+    y = d.campaigns.select { |o| o.status==1 && o.stat_left <= 0 }.size
+    z = d.campaigns.select { |o| o.status!=1 }.size
+    return_message[:active_campaigns] = {}
+    if w == 0 # no campaigns at all
+        return_message[:active_campaigns][:value] = "<i class='icon-remove'></i>"
+        return_message[:active_campaigns][:color] = 'gray'
+        return_message[:active_campaigns][:title] = 'no campaigns at all'
+    elsif x > 0 # active and not-completed campaigns
+        return_message[:active_campaigns][:value] = x.to_label
+        return_message[:active_campaigns][:title] = 'campaigns in progress'
+    elsif y > 0 # active and completed campaigns
+        return_message[:active_campaigns][:value] = "<i class='icon-ok'></i>"
+        return_message[:active_campaigns][:color] = 'blue'
+        return_message[:active_campaigns][:title] = 'campaigns completed'
+    elsif z > 0 # inactive campaigns
+        return_message[:active_campaigns][:value] = "<i class='icon-off'></i>"
+        return_message[:active_campaigns][:color] = 'red'
+        return_message[:active_campaigns][:title] = 'campaigns paused'
+    end
+
+    arr = d.campaigns.select { |o| o.status==1 && o.stat_left > 0 }
+    sent = arr.map { |o| o.stat_sent }.sum.to_f
+    pr = arr.map { |o| o.stat_positive_replies }.sum.to_f
+    avg = sent==0.0 ? 0.0 : (pr / sent).to_f * 100.to_f
+    return_message[:average_positive_responses_rate] = {}
+    if sent == 0.0
+        return_message[:average_positive_responses_rate][:color] = 'gray'
+        return_message[:average_positive_responses_rate][:value] = "-"
+    elsif avg < 0.25 
+        return_message[:average_positive_responses_rate][:color] = 'red'
+        return_message[:average_positive_responses_rate][:value] = "#{'%.2f' % avg}%"
+    elsif avg >= 1.0
+        return_message[:average_positive_responses_rate][:color] = 'green'
+        return_message[:average_positive_responses_rate][:value] = "#{'%.2f' % avg}%"
+    else
+        return_message[:average_positive_responses_rate][:color] = 'orange'
+        return_message[:average_positive_responses_rate][:value] = "#{'%.2f' % avg}%"
+    end 
+
+    row = DB["select deliveries_per_day from v_eml_capacity_needed where id_account = '#{aid}'"].first
+    x = row.nil? ? 0 : row[:deliveries_per_day].to_i
+    return_message[:daily_deliveries_needed] = {}
+    return_message[:daily_deliveries_needed][:value] = row.nil? ? '-' : x.to_label
+    if row
+        return_message[:daily_deliveries_needed][:color] = x > 200 ? 'orange' : 'blue'
+    else
+        return_message[:daily_deliveries_needed][:color] = 'gray'
+    end
+
+    # return
+    return_message[:status] = 'success'
+rescue => e
+    return_message[:status] = e.to_console
+end
+return return_message.to_json
+%>
