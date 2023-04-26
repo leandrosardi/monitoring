@@ -3,6 +3,7 @@ search_keyword = @login.user.preference('monitoring.agency.accounts.search_keywo
 search_premium = @login.user.preference('monitoring.agency.accounts.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
 selected_ids = @login.user.preference('monitoring.agency.accounts.selected_ids', '', nil)
 ids = selected_ids.split(',')
+all_prods = BlackStack::I2P::services_descriptor
 
 all = "
 select 
@@ -187,19 +188,27 @@ q = "
 <div class="modal fade add_bonus" >
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h3>Add Bonus</h3>
+        <h3>Add / Remove Credits</h3>
     </div>
     <div class="modal-body">
         <div>
             <form action="/monitoring/filter_add_bonus" method="get" id='add_bonus_form' name='add_bonus_form'>
                 <input type="hidden" id="selected_ids" name='selected_ids' class='selected-ids' value='<%=selected_ids.to_s%>'>
                 <label>
-                    Lead Credits
-                    <input type="number" class='select-all-on-focus' id="lead_credits" name="lead_credits" placeholder="Write a number here." value='0' />
+                    Service
+                    <select id='service_code' name='service_code'>
+					<%
+					all_prods.each { |o|
+					%>
+                        <option value='<%=o[:code]%>'><%=o[:code]%> - <%=o[:name].encode_html%></option>
+					<%
+					}				
+					%>
+                    </select>
                 </label>
                 <label>
-                    Email Credits
-                    <input type="number" class='select-all-on-focus' id="email_credits" name="email_credits" placeholder="Write a number here." value='0' />
+                    Credits
+                    <input type="number" class='select-all-on-focus' id="credits" name="credits" placeholder="Write a number here." value='0' />
                 </label>
             </form>
         </div>    

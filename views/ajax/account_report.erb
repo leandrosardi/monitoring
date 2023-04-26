@@ -28,16 +28,14 @@ begin
         return_message[:deadline][:color] = 'gray'
     end
 
+    BlackStack::I2P::Account.update_balance_snapshot([b.id])
+
     balance = BlackStack::I2P::Balance.new(b.id, 'leads')
-    balance.calculate
-    balance.save
     return_message[:leads_credits] = {}
     return_message[:leads_credits][:value] = b.credits('leads').to_i.to_label
     return_message[:leads_credits][:color] = b.credits('leads').to_i > 0 ? 'blue' : 'red'
 
     balance = BlackStack::I2P::Balance.new(b.id, 'deliveries')
-    balance.calculate
-    balance.save
     return_message[:email_credits] = {}
     return_message[:email_credits][:value] = b.credits('deliveries').to_i.to_label
     return_message[:email_credits][:color] = b.credits('deliveries').to_i > 0 ? 'blue' : 'red'
