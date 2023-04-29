@@ -19,6 +19,12 @@ left join \"user\" u on u.id=a.id_user_to_contact
 where 1=1
 "
 
+if !@login.user.account.sysowner?
+    all += "
+and (a.id='#{@login.user.id_account}' or a.id_account_owner='#{@login.user.id_account}')
+"
+end
+
 all += " 
     and (
         lower(a.name) like '%#{search_keyword.downcase.to_sql}%' or

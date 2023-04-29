@@ -31,16 +31,14 @@ BlackStack::Extensions::add ({
 
     # what are the screens to add in the leftbar
     :leftbar_icons => [
-        { :label => 'users', :icon => :user, :screen => :users, },
-        { :label => 'nodes', :icon => :desktop, :screen => :nodes, },
-
-        # TODO: Move this to the AGENCY extension
         { :label => 'accounts', :icon => :group, :screen => :'accounts', },
+        { :label => 'users', :icon => :user, :screen => :users, },
         { :label => 'campaigns', :icon => :beaker, :screen => :'campaigns', },
         { :label => 'capacity', :icon => :dashboard, :screen => :'capacity', },
-        { :label => 'scrapers', :icon => :group, :screen => :'scrapers', },
-        { :label => 'addresses', :icon => :envelope, :screen => :'addresses', },
         { :label => 'unibox', :icon => :inbox, :screen => :'unibox', },
+#        { :label => 'nodes', :icon => :desktop, :screen => :nodes, },
+#        { :label => 'scrapers', :icon => :group, :screen => :'scrapers', },
+#        { :label => 'addresses', :icon => :envelope, :screen => :'addresses', },
     ],
 })
 

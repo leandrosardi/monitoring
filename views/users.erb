@@ -21,6 +21,12 @@ join account a on a.id=u.id_account
 where 1=1
 "
 
+if !@login.user.account.sysowner?
+    all += "
+and (a.id='#{@login.user.id_account}' or a.id_account_owner='#{@login.user.id_account}')
+"
+end
+
 all += " 
     and (
         lower(a.name) like '%#{search_keyword.downcase}%' or
