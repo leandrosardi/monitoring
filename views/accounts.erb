@@ -2,6 +2,7 @@
 search_keyword = @login.user.preference('monitoring.agency.accounts.search_keyword', '', params[:search_keyword]).strip
 search_premium = @login.user.preference('monitoring.agency.accounts.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
 selected_ids = @login.user.preference('monitoring.agency.accounts.selected_ids', '', nil)
+period = @login.user.preference('monitoring.agency.accounts.period', 'today', params[:period])
 ids = selected_ids.split(',')
 all_prods = BlackStack::I2P::services_descriptor
 
@@ -97,7 +98,33 @@ q = "
 <!-- Single Panel -->
 <section class="row-fluid">
 	<div class="span12 box">
-        <p><b>Records:</b> <%=from_row.to_i.to_label%> to <%=to_row.to_i.to_label%> <b>of</b> <%=total_rows.to_i.to_label%></p>
+        <p>
+            <b>Records:</b> <%=from_row.to_i.to_label%> to <%=to_row.to_i.to_label%> <b>of</b> <%=total_rows.to_i.to_label%> | <b>Period:</b> 
+            <span style='margin:5px;'>
+            <%
+            # periods
+            [
+                {:period=>"today", :name=>"today"},
+                {:period=>"yesterday", :name=>"yesterday"},
+                {:period=>"month", :name=>"this month"},
+            ].each { |o|
+                if o[:period] == period
+                %>
+                    <span class='badge badge-blue'><%=o[:name]%></span>
+                <%
+                else
+                %>
+                    <a href="/monitoring/accounts?period=<%=o[:period]%>"><%=o[:name]%></a>
+                <%
+                end
+                %>
+                <span style='margin:5px;'> </span>
+                <%
+            }
+            %>
+        </span>
+
+        </p>
         <input type='hidden' name='aids' id='aids' value='' />
         <table class="table table-condensed" style="table-layout: fixed; width: 100%;">
             <thead>
@@ -113,12 +140,12 @@ q = "
 
                 <!-- Leads Scraping -->
                 <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Active<br/>Orders</th>
-                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Avg.<br/>Appd.</th>
+                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Append.<br/>Leads</th>
                 <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Daily<br/>Pages</th>
 
                 <!-- Emails Deliveries -->
                 <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Active<br/>Cmpg.</th>
-                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Avg.<br/>P.Rep.</th>
+                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Warm<br/>Leads</th>
                 <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Daily<br/>Emails</th>
 
                 <!-- Access Link -->
@@ -263,7 +290,7 @@ q = "
         // build array of ids
         var datas = [];
         $('tr.account').each(function() {
-            datas.push({ id_account: $(this).attr('data-id') });
+            datas.push({ id_account: $(this).attr('data-id'), period: '<%=period%>' });
         });
         // ajax call using progress.js
         handler = progressJs.start({
@@ -292,34 +319,46 @@ q = "
                     td.html(response.email_credits.value);
                     td.attr('title', response.email_credits.value);
                     td.css('color', response.email_credits.color);
-    
+                    
                     // active orders
                     td = tr.find('td.active_orders');
-                    td.html('<span class="badge badge-'+response.active_orders.color+'" title="'+response.active_orders.title+'">'+response.active_orders.value+'</span>');
-    
+                    str = '<span class="badge badge-'+response.active_orders.color+'" title="'+response.active_orders.title+'">'+response.active_orders.value+'</span><br/>';
+                    if (response.active_orders.label != undefined) {
+                        str += '<span style="color:'+response.active_orders.label.color+'" title="'+response.active_orders.title+'">'+response.active_orders.label.value+'</span>';
+                    }
+                    td.html(str);
+
                     td = tr.find('td.average_appending_rate');
-                    td.html(response.average_appending_rate.value);
-                    td.attr('title', response.average_appending_rate.value);
-                    td.css('color', response.average_appending_rate.color);
-    
+                    str = '<span class="badge badge-'+response.average_appending_rate.color+'" title="'+response.average_appending_rate.title+'">'+response.average_appending_rate.value+'</span><br/>';
+                    str += '<span style="color:'+response.average_appending_rate.label.color+'" title="'+response.average_appending_rate.title+'">'+response.average_appending_rate.label.value+'</span>';
+                    td.html(str);
+                    
                     td = tr.find('td.daily_pages_needed');
-                    td.html(response.daily_pages_needed.value);
-                    td.attr('title', response.daily_pages_needed.value);
-                    td.css('color', response.daily_pages_needed.color);
-    
+                    str = '<span class="badge badge-'+response.daily_pages_needed.color+'" title="'+response.daily_pages_needed.title+'">'+response.daily_pages_needed.value+'</span><br/>';
+                    str += '<span style="color:'+response.daily_pages_needed.label.color+'" title="'+response.daily_pages_needed.title+'">'+response.daily_pages_needed.label.value+'</span>';
+                    td.html(str);
+                    
                     // active campaigns
                     td = tr.find('td.active_campaigns');
-                    td.html('<span class="badge badge-'+response.active_campaigns.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.value+'</span>');
-    
+                    str = '<span class="badge badge-'+response.active_campaigns.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.value+'</span><br/>';
+                    if (response.active_orders.label != undefined) {
+                        str += '<span style="color:'+response.active_campaigns.label.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.label.value+'</span>';
+                    }
+                    td.html(str);
+                    
                     td = tr.find('td.average_positive_responses_rate');
-                    td.html(response.average_positive_responses_rate.value);
-                    td.attr('title', response.average_positive_responses_rate.value);
-                    td.css('color', response.average_positive_responses_rate.color);
-    
+                    str = '<span class="badge badge-'+response.average_positive_responses_rate.color+'" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.value+'</span><br/>';
+                    if (response.average_positive_responses_rate.label != undefined) {
+                        str += '<span style="color:'+response.average_positive_responses_rate.label.color+'" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.label.value+'</span>';
+                    }
+                    td.html(str);
+                    
                     td = tr.find('td.daily_deliveries_needed');
-                    td.html(response.daily_deliveries_needed.value);
-                    td.attr('title', response.daily_deliveries_needed.value);
-                    td.css('color', response.daily_deliveries_needed.color);    
+                    str = '<span class="badge badge-'+response.daily_deliveries_needed.color+'" title="'+response.daily_deliveries_needed.title+'">'+response.daily_deliveries_needed.value+'</span><br/>';
+                    if (response.daily_deliveries_needed.label != undefined) {
+                        str += '<span style="color:'+response.daily_deliveries_needed.label.color+'" title="'+response.daily_deliveries_needed.title+'">'+response.daily_deliveries_needed.label.value+'</span>';
+                    }
+                    td.html(str);
                 } else {
                     alert(data.status);
                 }
@@ -328,25 +367,5 @@ q = "
                 alert('error');
             },
         });
-/*
-        $.ajax({
-            url: '/ajax/monitoring/account_report.json',
-            type: 'POST',
-            data: {
-                id_account: tr.attr('data-id'),
-            },
-            success: function(data) {
-                response = JSON.parse(data);
-                if(response.status == 'success') {
-
-                } else {
-                    alert(data.status);
-                }
-            },
-            error: function(data) {
-                alert(data.status);
-            }
-        });
-*/
     });
 </script>

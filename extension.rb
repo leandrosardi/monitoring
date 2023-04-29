@@ -1,10 +1,10 @@
 BlackStack::Extensions::add ({
     # descriptive name and descriptor
     :name => 'monitoring',
-    :large_name => 'Infrastructure & Users Monitoring',
+    :large_name => 'Resellers Terminal',
 
     # Write a description here. It will be shown in the main dashboard of your MySaaS project.
-    :description => 'MySaaS extension for manage users and infrastructure. ',
+    :description => 'Sub-Accounts Creation. Performance Metrics. Infrastructure Monitoring.',
 
     # setup the url of the repository for installation and updates
     :repo_url => 'https://github.com/leandrosardi/monitoring',
