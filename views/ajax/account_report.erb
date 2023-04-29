@@ -209,7 +209,7 @@ begin
         return_message[:average_positive_responses_rate][:title] = 'no messages sent yet'
     elsif avg < 0.25 
         return_message[:average_positive_responses_rate][:color] = 'red'
-        return_message[:average_positive_responses_rate][:value] = sent.to_label
+        return_message[:average_positive_responses_rate][:value] = pr.to_label
         return_message[:average_positive_responses_rate][:title] = 'low performance'
 
         return_message[:average_positive_responses_rate][:label] = {}
@@ -217,7 +217,7 @@ begin
         return_message[:average_positive_responses_rate][:label][:color] = 'red'
     elsif avg >= 1.0
         return_message[:average_positive_responses_rate][:color] = 'green'
-        return_message[:average_positive_responses_rate][:value] = sent.to_label
+        return_message[:average_positive_responses_rate][:value] = pr.to_label
         return_message[:average_positive_responses_rate][:title] = 'good performance'
 
         return_message[:average_positive_responses_rate][:label] = {}
@@ -225,7 +225,7 @@ begin
         return_message[:average_positive_responses_rate][:label][:color] = 'green'
     else
         return_message[:average_positive_responses_rate][:color] = 'orange'
-        return_message[:average_positive_responses_rate][:value] = sent.to_label
+        return_message[:average_positive_responses_rate][:value] = pr.to_label
         return_message[:average_positive_responses_rate][:title] = 'regular performance'
 
         return_message[:average_positive_responses_rate][:label] = {}
