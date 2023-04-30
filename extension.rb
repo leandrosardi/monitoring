@@ -31,10 +31,11 @@ BlackStack::Extensions::add ({
 
     # what are the screens to add in the leftbar
     :leftbar_icons => [
-        { :label => 'accounts', :icon => :group, :screen => :'accounts', },
+        { :label => 'accounts', :icon => :dashboard, :screen => :'accounts', },
+        { :label => 'finances', :icon => :money, :screen => :'finances', },
         { :label => 'users', :icon => :user, :screen => :users, },
         { :label => 'campaigns', :icon => :beaker, :screen => :'campaigns', },
-        { :label => 'capacity', :icon => :dashboard, :screen => :'capacity', },
+        { :label => 'capacity', :icon => :hdd, :screen => :'capacity', },
         { :label => 'unibox', :icon => :inbox, :screen => :'unibox', },
 #        { :label => 'nodes', :icon => :desktop, :screen => :nodes, },
 #        { :label => 'scrapers', :icon => :group, :screen => :'scrapers', },
