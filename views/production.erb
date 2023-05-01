@@ -1,8 +1,8 @@
 <%
-search_keyword = @login.user.preference('monitoring.agency.accounts.search_keyword', '', params[:search_keyword]).strip
-search_premium = @login.user.preference('monitoring.agency.accounts.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
-selected_ids = @login.user.preference('monitoring.agency.accounts.selected_ids', '', nil)
-period = @login.user.preference('monitoring.agency.accounts.period', 'today', params[:period])
+search_keyword = @login.user.preference('monitoring.production.search_keyword', '', params[:search_keyword]).strip
+search_premium = @login.user.preference('monitoring.production.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
+selected_ids = @login.user.preference('monitoring.production.selected_ids', '', nil)
+period = @login.user.preference('monitoring.production.period', 'today', params[:period])
 ids = selected_ids.split(',')
 all_prods = BlackStack::I2P::services_descriptor
 
@@ -74,11 +74,11 @@ q = "
 <div class="mynavbar mysticky">
 	<section class="row-fluid">	
 		<div class="span6">
-		    <%=nav2("Monotoring", "/monitoring", "Accounts")%>
+		    <%=nav2("Monotoring", "/monitoring", "Production")%>
 		</div>
 		<div class="span6" style='text-align:right;'>
             <div class="pull-right">
-                <form action="/monitoring/accounts" method="get">
+                <form action="/monitoring/production" method="get">
                     <div class="span8">
                         <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
                     </div>
@@ -88,14 +88,20 @@ q = "
                 </form>
             </div>    
 
+            <%
+            if @login.user.account.sysowner?
+            %>
             <div class='btn-group'>
-                <button class='btn btn-blue' id='allow_premium' name='allow_premium' data-rows-group-id='accounts' title='Turn Premium ON'><i class='icon-star'></i></button>
-                <button class='btn btn-blue' id='disallow_premium' name='disallow_premium' data-rows-group-id='accounts' title='Turn Premium OFF'><i class='icon-star-empty'></i></button>
-                <button class='btn btn-blue' id='add_bonus' name='add_bonus' data-rows-group-id='accounts' data-toggle="modal" id='open_add_bonus_modal' data-target=".add_bonus" title='Add/Remove Bonus Credits'><i class='icon-gift'></i></button>
+                <button class='btn btn-pink' id='allow_premium' name='allow_premium' data-rows-group-id='accounts' title='Turn Premium ON'><i class='icon-star'></i></button>
+                <button class='btn btn-pink' id='disallow_premium' name='disallow_premium' data-rows-group-id='accounts' title='Turn Premium OFF'><i class='icon-star-empty'></i></button>
+                <button class='btn btn-pink' id='add_bonus' name='add_bonus' data-rows-group-id='accounts' data-toggle="modal" id='open_add_bonus_modal' data-target=".add_bonus" title='Add/Remove Bonus Credits'><i class='icon-gift'></i></button>
             </div>
+            <%
+            end # if @login.user.account.sysowner?
+            %>
 
             <div class='btn-group'>
-                <a href='/monitoring/accounts?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
+                <a href='/monitoring/production?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
             </div>
         </div>
 	</section>
@@ -103,8 +109,8 @@ q = "
 
 <!-- Single Panel -->
 <section class="row-fluid">
-	<div class="span12 box">
-        <p>
+    <div class="span12 box">    
+        <section class="row-fluid">
             <b>Records:</b> <%=from_row.to_i.to_label%> to <%=to_row.to_i.to_label%> <b>of</b> <%=total_rows.to_i.to_label%> | <b>Period:</b> 
             <span style='margin:5px;'>
             <%
@@ -120,7 +126,7 @@ q = "
                 <%
                 else
                 %>
-                    <a href="/monitoring/accounts?period=<%=o[:period]%>"><%=o[:name]%></a>
+                    <a href="/monitoring/production?period=<%=o[:period]%>"><%=o[:name]%></a>
                 <%
                 end
                 %>
@@ -128,9 +134,47 @@ q = "
                 <%
             }
             %>
-        </span>
+            </span>
+        </section>
 
-        </p>
+        <!-- Stats -->
+        <!--
+        <section class="row-fluid">
+            <div class="span6 box no-border non-collapsible">
+                <div class="span3 pie-chart">
+                    <div id="easy-pie-chart-1" data-percent="43" class="easyPieChart" style="width: 100px; height: 100px; line-height: 100px;">
+                        <button class="btn btn-large btn-blue disabled">5,675</button>
+                    </div>
+                    <div class="caption">
+                        Pages Uploaded
+                    </div>
+                </div>
+        
+                <div class="span3 pie-chart">
+                    <div id="easy-pie-chart-2" data-percent="43" class="easyPieChart" style="width: 100px; height: 100px; line-height: 100px;">
+                        <button class="btn btn-large btn-black disabled">4,000</button>
+                    </div>
+                    <div class="caption">
+                        Pages Neeeded
+                    </div>
+                </div>
+                
+                <div class="span3 pie-chart">
+                    <div id="easy-pie-chart-3" data-percent="43" class="easyPieChart" style="width: 100px; height: 100px; line-height: 100px;">
+                        <button class="btn btn-large btn-orange disabled">75%</button>
+                    </div>
+                    <div class="caption">
+                        Upload Capacity
+                    </div>
+                </div>
+        
+            </div>   
+            <div class="span6">
+                
+            </div>   
+        </section>
+        -->
+        
         <input type='hidden' name='aids' id='aids' value='' />
         <table class="table table-condensed" style="table-layout: fixed; width: 100%;">
             <thead>

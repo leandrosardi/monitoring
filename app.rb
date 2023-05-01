@@ -1,6 +1,6 @@
 # screens
 get '/monitoring', :auth => true do
-    erb :"/extensions/monitoring/views/users", :layout => :'/views/layouts/core'
+    erb :"/extensions/monitoring/views/production", :layout => :'/views/layouts/core'
 end
 
 get '/monitoring/users', :auth => true do
@@ -34,8 +34,12 @@ end
 
 
 # TODO: move this to the agency extension
-get '/monitoring/accounts', :auth => true do
-    erb :"/extensions/monitoring/views/accounts", :layout => :'/views/layouts/core'
+get '/monitoring/production', :auth => true do
+    erb :"/extensions/monitoring/views/production", :layout => :'/views/layouts/core'
+end
+
+get '/monitoring/financial', :auth => true do
+    erb :"/extensions/monitoring/views/financial", :layout => :'/views/layouts/core'
 end
 
 get '/monitoring/filter_allow_premium', :auth => true do
