@@ -395,7 +395,7 @@ q = "
                     // active campaigns
                     td = tr.find('td.active_campaigns');
                     str = '<span class="badge badge-'+response.active_campaigns.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.value+'</span><br/>';
-                    if (response.active_orders.label != undefined) {
+                    if (response.active_campaigns.label != undefined) {
                         str += '<span style="color:'+response.active_campaigns.label.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.label.value+'</span>';
                     }
                     td.html(str);
