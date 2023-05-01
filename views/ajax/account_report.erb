@@ -121,6 +121,34 @@ begin
             and v.mm=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
             and v.dd=extract('day', cast('#{now}' as timestamp)-interval '1 day')         
         "].first
+    elsif period == 'last_2_days'
+        row = DB["
+            select 2 as total_days, sum(total_pages) as total_pages
+            from v_scraping_expenses_daily v 
+            where v.id_account='#{aid}' 
+            and cast(v.yy||'-'||v.mm||'-'||v.dd as timestamp) >= cast('#{now}' as timestamp)-interval '2 days'
+        "].first
+    elsif period == 'last_3_days'
+        row = DB["
+            select 3 as total_days, sum(total_pages) as total_pages
+            from v_scraping_expenses_daily v 
+            where v.id_account='#{aid}' 
+            and cast(v.yy||'-'||v.mm||'-'||v.dd as timestamp) >= cast('#{now}' as timestamp)-interval '3 days'
+        "].first
+    elsif period == 'last_week'
+        row = DB["
+            select 7 as total_days, sum(total_pages) as total_pages
+            from v_scraping_expenses_daily v 
+            where v.id_account='#{aid}' 
+            and cast(v.yy||'-'||v.mm||'-'||v.dd as timestamp) >= cast('#{now}' as timestamp)-interval '7 day'
+        "].first
+    elsif period == 'last_month'
+        row = DB["
+            select 30 as total_days, sum(total_pages) as total_pages
+            from v_scraping_expenses_daily v 
+            where v.id_account='#{aid}' 
+            and cast(v.yy||'-'||v.mm||'-'||v.dd as timestamp) >= cast('#{now}' as timestamp)-interval '1 month'
+        "].first
     else #if period == 'month'
         row = DB["
             select extract('day', cast('#{now}' as timestamp)) as total_days, sum(total_pages) as total_pages
@@ -192,6 +220,22 @@ begin
             and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
             and t.\"day\"=extract('day', cast('#{now}' as timestamp)-interval '1 day')         
         "
+    elsif period == 'last_2_days'
+        q += "
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '2 days'
+        "
+    elsif period == 'last_3_days'
+        q += "
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '3 days'
+        "
+    elsif period == 'last_week'
+        q += "
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '7 day'
+        "
+    elsif period == 'last_month'
+        q += "
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '1 month'
+        "
     else #if period == 'month'
         q += "
             and t.\"year\"=extract('year', cast('#{now}' as timestamp))
@@ -201,9 +245,9 @@ begin
     row = DB[q].first
     sent = row[:sents].to_i
     pr = row[:prs].to_i
-    avg = sent==0 ? 0.0 : (pr.to_f / sent.to_f) * 100.to_f
+    avg = sent==0 ? 100.0 : (pr.to_f / sent.to_f) * 100.to_f
     return_message[:average_positive_responses_rate] = {}
-    if sent == 0.0
+    if sent == 0 && pr == 0
         return_message[:average_positive_responses_rate][:value] = "0"
         return_message[:average_positive_responses_rate][:color] = 'gray'
         return_message[:average_positive_responses_rate][:title] = 'no messages sent yet'
@@ -256,6 +300,34 @@ begin
             and t.\"year\"=extract('year', cast('#{now}' as timestamp)-interval '1 day') 
             and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
             and t.\"day\"=extract('day', cast('#{now}' as timestamp)-interval '1 day')
+        "].first
+    elsif period == 'last_2_days'
+        row = DB["
+            select 2 as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
+            from eml_timeline t 
+            where t.id_account='#{aid}'    
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '2 days'
+        "].first
+    elsif period == 'last_3_days'
+        row = DB["
+            select 3 as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
+            from eml_timeline t 
+            where t.id_account='#{aid}'    
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '3 days'
+        "].first
+    elsif period == 'last_week'
+        row = DB["
+            select 7 as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
+            from eml_timeline t 
+            where t.id_account='#{aid}'    
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '7 day'
+        "].first
+    elsif period == 'last_month'
+        row = DB["
+            select 30 as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
+            from eml_timeline t 
+            where t.id_account='#{aid}'    
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '1 month'
         "].first
     elsif period == 'month'
         row = DB["
