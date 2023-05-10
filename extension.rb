@@ -31,6 +31,7 @@ BlackStack::Extensions::add ({
 
     # what are the screens to add in the leftbar
     :leftbar_icons => [
+        { :label => 'dashboard', :icon => :dashboard, :screen => :'dashboard', },
         { :label => 'production', :icon => :cogs, :screen => :'production', },
 #        { :label => 'finances', :icon => :money, :screen => :'finances', },
         { :label => 'users', :icon => :user, :screen => :users, },
@@ -59,7 +60,7 @@ module BlackStack
         COMPARSION_LESS_EQUAL = 'less_equal'
 
         class Monitor
-            attr_accessor :name, :description, :type, :value_function, :threshold_function, :threshold, :comparsion, :unit_name
+            attr_accessor :name, :description, :type, :value_function, :threshold_function, :threshold, :comparsion, :unit_name, :section_name
             attr_accessor :last_value
             #attr_accessor :poll_frequency_number, :poll_frequency_unit
             #attr_accessor :timeline # historical values
@@ -74,6 +75,7 @@ module BlackStack
                 @threshold = h[:threshold]
                 @comparsion = h[:comparsion]
                 @unit_name = h[:unit_name]
+                @section_name = h[:section_name]
             end
             
             def get_threshold
@@ -129,6 +131,10 @@ module BlackStack
         end # class Monitor
 
         @@monitors = []
+
+        def self.remove_all
+            @@monitors = []
+        end
 
         def self.add(h)
             @@monitors << BlackStack::Monitoring::Monitor.new(h)

@@ -1,16 +1,33 @@
 <%
 # TODO: Move this to config.rb when I can deploy with '"'
 # Defining monitors
+BlackStack::Monitoring.remove_all
 BlackStack::Monitoring.set([{
-  :name => 'Scrapers Online',
-  :description => 'Number of Scrpers Active the Last Hour',
+# Total Resources
+# - scrapers online - total
+# - addresses shared - total
+# Capacity
+# - daily pages upload capacity (achieved / needed)
+# - daily email deliveries capacity (achieved / needed)
+# Performance
+# - average scrapers performance (uploaded pages / daily quota)
+# - pages upload / hr. (achieved / needed)
+# - pages earning / hr. (achieved / needed)
+# - pages parsing / hr. (achieved / needed)
+# - average emails appened / page (achieved / needed)
+# - emails delivery / hr. (achieved / needed)
+# 
+
+# Total Resources
+  :section_name => '1. Total Resources',
+  :name => 'Scrapers',
+  :description => 'Number of Scrpers Sharing their Extensions, Active the Last Hour',
   :type => BlackStack::Monitoring::TYPE_INT,
   :value_function => Proc.new do |*args|
     q = '
-      --scrapers online - total
       select count(*) as n
       from '+34.chr+'user'+34.chr+' u
-      where u.scraper_share is not null
+      where coalesce(u.scraper_share, false) = true
       and u.scraper_last_ping_time > cast(\''+now.to_s+'\' as timestamp) - interval \'1 hours\'
     '
     DB[q].first[:n].to_i
@@ -19,6 +36,67 @@ BlackStack::Monitoring.set([{
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'scrapers',
 }, {
+  :section_name => '1. Total Resources',
+  :name => 'Addresses',
+  :description => 'Number of Addresses, Shared and Enabled, that Passed the Last Check',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = '
+    select count(a.*) as n
+    from eml_address a
+    where coalesce(a.shared, false) = true
+    and coalesce(a.enabled, false) = true
+    and coalesce(a.check_success, false) = true
+    '
+    DB[q].first[:n].to_i
+  end,
+  :threshold => nil, # there is no threshold to comparate
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'scrapers',
+
+# Capacity
+}, {
+  :section_name => '2. Capacity',
+  :name => 'Daily Pages',
+  :description => 'Daily pages upload capacity (achieved / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as n
+    from scr_page p
+    where p.upload_end_time > current_timestamp - interval '1 day'"
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    q = 'select sum(v.pages_per_day) as n from v_dfyl_capacity_needed v where v.pages_per_day > 0'
+    DB[q].first[:n].to_i
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'pages uploaded',
+}, {
+  :section_name => '2. Capacity',
+  :name => 'Daily Emails',
+  :description => 'daily email deliveries capacity (achieved / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as n
+    from eml_delivery d
+    where d.create_time > current_timestamp - interval '1 day'
+    and coalesce(d.delivery_success, false) = true
+    and coalesce(d.is_response, false) = false
+    and coalesce(d.is_bounce, false) = false
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    q = 'select sum(v.deliveries_per_day) as n from v_eml_capacity_needed v where v.deliveries_per_day > 0'
+    DB[q].first[:n].to_i
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'emails deliveried',
+}, {
+  :section_name => '3. Performance',
   :name => 'Pages Upload / Hr.',
   :description => 'Number of Pages Uploaded the Last Hour',
   :type => BlackStack::Monitoring::TYPE_INT,
@@ -45,6 +123,7 @@ BlackStack::Monitoring.set([{
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'pages',
 }, {
+  :section_name => '3. Performance',
   :name => 'Pages Parsing / Hr.',
   :description => 'Number of Pages Parsed the Last Hour',
   :type => BlackStack::Monitoring::TYPE_INT,
@@ -71,6 +150,7 @@ BlackStack::Monitoring.set([{
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'pages',
 }, {
+  :section_name => '3. Performance',
   :name => 'Pages in Queue',
   :description => 'Number of Pages Pending to Be Parsed.\nKeep this number as low as possible, in order to pay additional for scraping services.',
   :type => BlackStack::Monitoring::TYPE_INT,
@@ -90,6 +170,7 @@ BlackStack::Monitoring.set([{
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'pages',
 }, {
+  :section_name => '3. Performance',
   :name => 'Email Delivery Capacity',
   :description => 'Number of Daily Emails that can be sent, over the number of daily emails I need to send.',
   :type => BlackStack::Monitoring::TYPE_INT,
@@ -220,15 +301,53 @@ BlackStack::Monitoring.set([{
 	<div class="span12 box">
         <table class="table table-condensed qabot">
             <%
-            BlackStack::Monitoring.monitors.each { |m|
-                color = m.pass? ? 'qagreen' : 'qared'
-                value = m.last_value.to_s
-                thres = m.get_threshold
+            last_section = nil
+            i = 0
+            j = 0
+            reset_row = false
+            BlackStack::Monitoring.monitors.sort_by { |m| m.section_name }.each { |m|
+              i += 1
+              j += 1
+              section = m.section_name
+              color = m.pass? ? 'qagreen' : 'qared'
+              value = m.last_value.to_s
+              thres = m.get_threshold
+
+              # if section changed or i is odd
+              reset_row = (section.to_s != last_section.to_s || i % 2 == 0)
+puts
+puts m.name
+puts i
+puts i % 2
+puts reset_row
+              if reset_row
+                i = 0
+                if j > 1
+                  %>
+                  </tr>
+                  <%
+                end
+
+                if section.to_s != last_section
+                  %>
+                  <tr>
+                    <td>
+                      <h2><%=section.to_s%></h2>
+                    </td>
+                  </tr>
+                  <%
+                end
+
+                %>
+                <tr class='qarow'>
+                <%
+              end
+
+              last_section = section
             %>
-            <tr class='qarow'>
                 <td class='qaname'>
                     <span class='qatitle'><%=m.name.encode_html%></span><br/>
-                    <%=m.description.encode_html%>
+                    <%=m.description.to_s%>
                 </td>
                 <td rowspan=1 class='qaflag <%=color%>'>
                     <%
@@ -245,14 +364,12 @@ BlackStack::Monitoring.set([{
                     <br/>
                     <span class='qacomment'><%=m.unit_name.encode_html%></span>
                 </td>
-                <td rowspan=1 class='qachart'>
-                    <!--
-                        Chart showing the number the status of the alert by ss, mi, hh, dd, mm, qq or yy.
-                    -->
-                    no chart yet.
-                </td>
-            </tr>
             <%
+            if j > 1
+              %>
+              </tr>
+              <%
+            end
             }
             %>
         </table>

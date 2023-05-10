@@ -1,6 +1,6 @@
 # screens
 get '/monitoring', :auth => true do
-    erb :"/extensions/monitoring/views/production", :layout => :'/views/layouts/core'
+    erb :"/extensions/monitoring/views/dashboard", :layout => :'/views/layouts/core'
 end
 
 get '/monitoring/users', :auth => true do
@@ -34,6 +34,10 @@ end
 
 
 # TODO: move this to the agency extension
+get '/monitoring/dashboard', :auth => true do
+    erb :"/extensions/monitoring/views/dashboard", :layout => :'/views/layouts/core'
+end
+
 get '/monitoring/production', :auth => true do
     erb :"/extensions/monitoring/views/production", :layout => :'/views/layouts/core'
 end
@@ -59,10 +63,6 @@ get '/monitoring/campaigns', :auth => true do
 end
 
 # TODO: move this to the agency extension
-get '/monitoring/capacity', :auth => true do
-    erb :"/extensions/monitoring/views/capacity", :layout => :'/views/layouts/core'
-end
-
 get '/monitoring/scrapers', :auth => true do
     erb :"/extensions/scraper/views/dashboard", :layout => :'/views/layouts/core'
 end
