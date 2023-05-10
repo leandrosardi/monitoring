@@ -16,7 +16,11 @@ BlackStack::Monitoring.set([{
 # - pages parsing / hr. (achieved / needed)
 # - average emails appened / page (achieved / needed)
 # - emails delivery / hr. (achieved / needed)
-# 
+# Errors
+# - page.upload error rate
+# - page.earning error rate
+# - page.parsing error rate
+# - email.delivery error rate
 
 # Total Resources
   :section_name => '1. Total Resources',
@@ -302,49 +306,24 @@ BlackStack::Monitoring.set([{
         <table class="table table-condensed qabot">
             <%
             last_section = nil
-            i = 0
-            j = 0
-            reset_row = false
             BlackStack::Monitoring.monitors.sort_by { |m| m.section_name }.each { |m|
-              i += 1
-              j += 1
               section = m.section_name
               color = m.pass? ? 'qagreen' : 'qared'
               value = m.last_value.to_s
               thres = m.get_threshold
-
-              # if section changed or i is odd
-              reset_row = (section.to_s != last_section.to_s || i % 2 == 0)
-puts
-puts m.name
-puts i
-puts i % 2
-puts reset_row
-              if reset_row
-                i = 0
-                if j > 1
-                  %>
-                  </tr>
-                  <%
-                end
-
-                if section.to_s != last_section
-                  %>
-                  <tr>
-                    <td>
-                      <h2><%=section.to_s%></h2>
-                    </td>
-                  </tr>
-                  <%
-                end
-
+              # if section changed
+              if section.to_s != last_section
                 %>
-                <tr class='qarow'>
+                <tr>
+                  <td colspan=4>
+                    <h3><%=section.to_s%></h3>
+                  </td>
+                </tr>
                 <%
               end
-
               last_section = section
-            %>
+              %>
+              <tr class='qarow'>
                 <td class='qaname'>
                     <span class='qatitle'><%=m.name.encode_html%></span><br/>
                     <%=m.description.to_s%>
@@ -364,12 +343,8 @@ puts reset_row
                     <br/>
                     <span class='qacomment'><%=m.unit_name.encode_html%></span>
                 </td>
-            <%
-            if j > 1
-              %>
               </tr>
               <%
-            end
             }
             %>
         </table>
