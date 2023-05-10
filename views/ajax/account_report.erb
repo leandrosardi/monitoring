@@ -89,6 +89,7 @@ begin
     return_message[:average_appending_rate] = {}
     return_message[:average_appending_rate][:value] = cnt.to_label
     return_message[:average_appending_rate][:color] = cnt > 0 ? 'blue' : 'gray'
+    return_message[:average_appending_rate][:title] = x > 0 ? "Found Verified Email of #{z}% of Leads Scraped" : 'no active orders'
     return_message[:average_appending_rate][:label] = {}
     return_message[:average_appending_rate][:label][:value] = x > 0 ? "#{z}%" : '-'
     if x > 0
@@ -158,13 +159,14 @@ begin
             and v.mm=extract('month', cast('#{now}' as timestamp)) 
         "].first
     end
-    y = row[:total_pages].to_i / row[:total_days].to_i if row && row[:total_days].to_i > 0
+    y = row[:total_pages].to_f / row[:total_days].to_f if row && row[:total_days].to_i > 0
     # 
     return_message[:daily_pages_needed] = {}
     return_message[:daily_pages_needed][:value] = x==0 ? '-' : x.to_label
     return_message[:daily_pages_needed][:color] = 'gray'
+    return_message[:daily_pages_needed][:title] = "Daily Pages Needed to Meet Deadline, over the Pages Uploaded Daily in the #{period.to_s.gsub('_', ' ').capitalize}"
     return_message[:daily_pages_needed][:label] = {}
-    return_message[:daily_pages_needed][:label][:value] = y.to_label
+    return_message[:daily_pages_needed][:label][:value] = "#{'%.1f' % y}/d"
     return_message[:daily_pages_needed][:label][:color] = y > x ? 'green' : 'red'
 
     # Emails Deliveries
@@ -248,12 +250,12 @@ begin
     avg = sent==0 ? 100.0 : (pr.to_f / sent.to_f) * 100.to_f
     return_message[:average_positive_responses_rate] = {}
     if sent == 0 && pr == 0
-        return_message[:average_positive_responses_rate][:value] = "0"
+        return_message[:average_positive_responses_rate][:value] = "0/0"
         return_message[:average_positive_responses_rate][:color] = 'gray'
         return_message[:average_positive_responses_rate][:title] = 'no messages sent yet'
     elsif avg < 0.25 
         return_message[:average_positive_responses_rate][:color] = 'red'
-        return_message[:average_positive_responses_rate][:value] = pr.to_label
+        return_message[:average_positive_responses_rate][:value] = "#{pr.to_label}/#{sent.to_label}"
         return_message[:average_positive_responses_rate][:title] = 'low performance'
 
         return_message[:average_positive_responses_rate][:label] = {}
@@ -261,7 +263,7 @@ begin
         return_message[:average_positive_responses_rate][:label][:color] = 'red'
     elsif avg >= 1.0
         return_message[:average_positive_responses_rate][:color] = 'green'
-        return_message[:average_positive_responses_rate][:value] = pr.to_label
+        return_message[:average_positive_responses_rate][:value] = "#{pr.to_label}/#{sent.to_label}"
         return_message[:average_positive_responses_rate][:title] = 'good performance'
 
         return_message[:average_positive_responses_rate][:label] = {}
@@ -269,7 +271,7 @@ begin
         return_message[:average_positive_responses_rate][:label][:color] = 'green'
     else
         return_message[:average_positive_responses_rate][:color] = 'orange'
-        return_message[:average_positive_responses_rate][:value] = pr.to_label
+        return_message[:average_positive_responses_rate][:value] = "#{pr.to_label}/#{sent.to_label}"
         return_message[:average_positive_responses_rate][:title] = 'regular performance'
 
         return_message[:average_positive_responses_rate][:label] = {}
@@ -338,13 +340,14 @@ begin
             and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
         "].first
     end
-    y = row[:total_sents].to_i / row[:total_days].to_i if row && row[:total_days].to_i > 0
+    y = row[:total_sents].to_f / row[:total_days].to_f if row && row[:total_days].to_i > 0
     # 
     return_message[:daily_deliveries_needed] = {}
     return_message[:daily_deliveries_needed][:value] = x==0 ? '-' : x.to_label
     return_message[:daily_deliveries_needed][:color] = 'gray'
+    return_message[:daily_deliveries_needed][:title] = "Daily Deliveries Needed to Meet Deadline, over the Deliveries Sent Daily in the #{period.to_s.gsub('_', ' ').capitalize}"
     return_message[:daily_deliveries_needed][:label] = {}
-    return_message[:daily_deliveries_needed][:label][:value] = y.to_label
+    return_message[:daily_deliveries_needed][:label][:value] = "#{'%.1f' % y}/d"
     return_message[:daily_deliveries_needed][:label][:color] = y > x ? 'green' : 'red'
 
 

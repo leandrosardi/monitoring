@@ -193,13 +193,13 @@ q = "
                 <th style="width:55px;text-align:right;background-color:rgb(245,255,245);">Email<br/>Credits</th>
 
                 <!-- Leads Scraping -->
-                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Orders<br/>/Progr%</th>
-                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Leads<br/>Appnd%</th>
+                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Progr%</th>
+                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Appnd%</th>
                 <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Daily<br/>Pages</th>
 
                 <!-- Emails Deliveries -->
-                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Camps.<br/>/Left</th>
-                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Leads<br/>/Warm%</th>
+                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Left#</th>
+                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Warm%</th>
                 <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Daily<br/>Emails</th>
 
                 <!-- Access Link -->
@@ -401,7 +401,7 @@ q = "
                     td.html(str);
                     
                     td = tr.find('td.average_positive_responses_rate');
-                    str = '<span class="badge badge-'+response.average_positive_responses_rate.color+'" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.value+'</span><br/>';
+                    str = '<span style="color:gray;" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.value+'</span><br/>';
                     if (response.average_positive_responses_rate.label != undefined) {
                         str += '<span style="color:'+response.average_positive_responses_rate.label.color+'" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.label.value+'</span>';
                     }
