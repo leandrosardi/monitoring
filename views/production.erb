@@ -194,7 +194,7 @@ q = "
 
                 <!-- Leads Scraping -->
                 <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Progr%</th>
-                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Appnd%</th>
+                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Verify%</th>
                 <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Daily<br/>Pages</th>
 
                 <!-- Emails Deliveries -->
@@ -233,7 +233,7 @@ q = "
 
                     <!-- Leads Scraping -->
                     <td class="fix active_orders" title="" style="text-align:right;background-color:rgb(255,245,245);"></td>
-                    <td class="fix average_appending_rate" title="" style="text-align:right;background-color:rgb(255,245,245);"></td>
+                    <td class="fix average_verified_rate" title="" style="text-align:right;background-color:rgb(255,245,245);"></td>
                     <td class="fix daily_pages_needed" title="" style="text-align:right;background-color:rgb(255,245,245);"></td>
     
                     <!-- Emails Deliveries -->
@@ -382,9 +382,9 @@ q = "
                     }
                     td.html(str);
 
-                    td = tr.find('td.average_appending_rate');
-                    str = '<span class="badge badge-'+response.average_appending_rate.color+'" title="'+response.average_appending_rate.title+'">'+response.average_appending_rate.value+'</span><br/>';
-                    str += '<span style="color:'+response.average_appending_rate.label.color+'" title="'+response.average_appending_rate.title+'">'+response.average_appending_rate.label.value+'</span>';
+                    td = tr.find('td.average_verified_rate');
+                    str = '<span class="badge badge-'+response.average_verified_rate.color+'" title="'+response.average_verified_rate.title+'">'+response.average_verified_rate.value+'</span><br/>';
+                    str += '<span style="color:'+response.average_verified_rate.label.color+'" title="'+response.average_verified_rate.title+'">'+response.average_verified_rate.label.value+'</span>';
                     td.html(str);
                     
                     td = tr.find('td.daily_pages_needed');

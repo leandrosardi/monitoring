@@ -84,17 +84,16 @@ BlackStack::Monitoring.set([{
   :type => BlackStack::Monitoring::TYPE_INT,
   :value_function => Proc.new do |*args|
     q = "
-    select count(*) as n
-    from eml_delivery d
-    where d.create_time > current_timestamp - interval '1 day'
-    and coalesce(d.delivery_success, false) = true
-    and coalesce(d.is_response, false) = false
-    and coalesce(d.is_bounce, false) = false
+    select sum(a.max_deliveries_per_day) as n
+    from eml_address a
+    where coalesce(a.enabled, false) = true
+    and coalesce(a.shared, false) = true
+    and coalesce(a.check_success, false) = true
     "
     DB[q].first[:n].to_i
   end,
   :threshold_function => Proc.new do |*args|
-    q = 'select sum(v.deliveries_per_day) as n from v_eml_capacity_needed v where v.deliveries_per_day > 0'
+    q = 'select cast(sum(v.email_credits) as float)/28 as n from v_eml_deadlines v where v.email_credits > 0'
     DB[q].first[:n].to_i
   end,
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,

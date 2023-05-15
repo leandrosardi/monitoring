@@ -7,7 +7,7 @@ begin
     b = BlackStack::I2P::Account.where(:id=>aid).first
     c = BlackStack::Scraper::Account.where(:id=>aid).first
     d = BlackStack::Emails::Account.where(:id=>aid).first
-    min_appending_rate = BlackStack::DfyLeads::Order::MIN_APPENDING_RATE
+    min_appending_rate = BlackStack::DfyLeads::Order::MIN_VERIFIED_RATE
 
     # Balance
     dt = b.deadline
@@ -83,19 +83,19 @@ begin
 
     w = c.orders.select { |o| o.dfyl_id_parent.nil? && o.status && o.dfyl_stat_progress.to_i < 100 }
     x = w.size
-    y = w.map { |o| o.dfyl_stat_appending_rate.to_f }.sum
+    y = w.map { |o| o.dfyl_stat_verified_rate.to_f }.sum
     z = x > 0 ? (y.to_f / x.to_f).to_i : 0
-    cnt = w.map { |o| o.dfyl_stat_leads_appended.to_i }.sum
-    return_message[:average_appending_rate] = {}
-    return_message[:average_appending_rate][:value] = cnt.to_label
-    return_message[:average_appending_rate][:color] = cnt > 0 ? 'blue' : 'gray'
-    return_message[:average_appending_rate][:title] = x > 0 ? "Found Verified Email of #{z}% of Leads Scraped" : 'no active orders'
-    return_message[:average_appending_rate][:label] = {}
-    return_message[:average_appending_rate][:label][:value] = x > 0 ? "#{z}%" : '-'
+    cnt = w.map { |o| o.dfyl_stat_leads_verified.to_i }.sum
+    return_message[:average_verified_rate] = {}
+    return_message[:average_verified_rate][:value] = cnt.to_label
+    return_message[:average_verified_rate][:color] = cnt > 0 ? 'blue' : 'gray'
+    return_message[:average_verified_rate][:title] = x > 0 ? "Found Verified Email of #{z}% of Leads Scraped" : 'no active orders'
+    return_message[:average_verified_rate][:label] = {}
+    return_message[:average_verified_rate][:label][:value] = x > 0 ? "#{z}%" : '-'
     if x > 0
-        return_message[:average_appending_rate][:label][:color] = z < min_appending_rate ? 'red' : 'green'
+        return_message[:average_verified_rate][:label][:color] = z < min_appending_rate ? 'red' : 'green'
     else
-        return_message[:average_appending_rate][:label][:color] = 'gray'
+        return_message[:average_verified_rate][:label][:color] = 'gray'
     end
     
     # needed pages
@@ -280,7 +280,7 @@ begin
     end 
 
     # needed emails
-    row = DB["select deliveries_per_day from v_eml_capacity_needed where id_account = '#{aid}'"].first
+    row = DB["select cast(sum(v.email_credits) as float)/28 as deliveries_per_day from v_eml_deadlines v where v.id_account = '#{aid}'"].first
     x = row.nil? ? 0 : row[:deliveries_per_day].to_i
     # delivered emails
     y = 0 # total pages
