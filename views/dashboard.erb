@@ -186,9 +186,7 @@ BlackStack::Monitoring.set([{
     "
     DB[q].first[:n].to_i
   end,
-  :threshold_function => Proc.new do |*args|
-    0
-  end,
+  :threshold_function => nil,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'IPNs',
 }, {
@@ -210,9 +208,7 @@ BlackStack::Monitoring.set([{
     "
     DB[q].first[:n].to_i
   end,
-  :threshold_function => Proc.new do |*args|
-    0
-  end,
+  :threshold_function => nil,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'IPNs',
 }, {
@@ -228,9 +224,7 @@ BlackStack::Monitoring.set([{
     "
     DB[q].first[:n].to_i
   end,
-  :threshold_function => Proc.new do |*args|
-    0
-  end,
+  :threshold_function => nil,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'Accounts',
 
@@ -249,9 +243,7 @@ BlackStack::Monitoring.set([{
     "
     DB[q].first[:n].to_i
   end,
-  :threshold_function => Proc.new do |*args|
-    0
-  end,
+  :threshold_function => nil,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'IPNs',
 }, {
@@ -267,9 +259,7 @@ BlackStack::Monitoring.set([{
     "
     DB[q].first[:n].to_i
   end,
-  :threshold_function => Proc.new do |*args|
-    0
-  end,
+  :threshold_function => nil,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'Accounts',
 
@@ -293,9 +283,7 @@ BlackStack::Monitoring.set([{
     "
     DB[q].first[:n].to_i
   end,
-  :threshold_function => Proc.new do |*args|
-    0
-  end,
+  :threshold_function => nil,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'Exports',
 
@@ -319,12 +307,47 @@ BlackStack::Monitoring.set([{
     "
     DB[q].first[:n].to_i
   end,
-  :threshold_function => Proc.new do |*args|
-    0
-  end,
+  :threshold_function => nil,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'Exports',
 
+# Emails
+}, {
+  :section_name => '4. Queue',
+  :name => 'emails.data.verify',
+  :description => 'Data records pending to be verified.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as n
+    from fl_data b
+    where coalesce(b.verify_success, false) = false
+    and coalesce(b.verify_reservation_times, 0) < 3 
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    100
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'Data Records',
+}, {
+  :section_name => '5. Failures',
+  :name => 'emails.data.verify',
+  :description => 'Data records failed when being verified.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as n
+    from fl_data b
+    where coalesce(b.verify_success, false) = false
+    and coalesce(b.verify_reservation_times, 0) >= 3 
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => nil,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'Data Records',
 
 
 =begin
