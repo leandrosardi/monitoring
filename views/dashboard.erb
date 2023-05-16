@@ -327,7 +327,7 @@ BlackStack::Monitoring.set([{
     DB[q].first[:n].to_i
   end,
   :threshold_function => Proc.new do |*args|
-    100
+    10
   end,
   :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
   :unit_name => 'Data Records',
