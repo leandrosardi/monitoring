@@ -23,9 +23,11 @@ BlackStack::Monitoring.set([{
 # - email.delivery error rate
 
 # Total Resources
+# - how many scrapers are online
+# - how many addresses are shared and able to deliver
   :section_name => '1. Total Resources',
-  :name => 'Scrapers',
-  :description => 'Number of Scrpers Sharing their Extensions, Active the Last Hour',
+  :name => 'Scrapers (Last Hour)',
+  :description => 'Number of Scrpers Sharing their Extensions and Active the Last Hour',
   :type => BlackStack::Monitoring::TYPE_INT,
   :value_function => Proc.new do |*args|
     q = '
@@ -56,48 +58,276 @@ BlackStack::Monitoring.set([{
   end,
   :threshold => nil, # there is no threshold to comparate
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
-  :unit_name => 'scrapers',
+  :unit_name => 'addresses',
 
 # Capacity
+# capacity: to know if I have resources enough to handle the current clientelle
 }, {
   :section_name => '2. Capacity',
-  :name => 'Daily Pages',
-  :description => 'Daily pages upload capacity (achieved / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
+  :name => 'Page Uploading Capacity',
+  :description => 'Daily pages upload (capacity / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
   :type => BlackStack::Monitoring::TYPE_INT,
   :value_function => Proc.new do |*args|
     q = "
-    select count(*) as n
-    from scr_page p
-    where p.upload_end_time > current_timestamp - interval '1 day'"
+    select 'daily pages upload capacity', sum(u.stealth_default_max_pages_per_day) as n
+    from \"user\" u
+    where coalesce(u.scraper_last_ping_time, '2000-01-01') > current_timestamp - interval '1 day' 
+    and coalesce(u.scraper_share, false) = true 
+    and coalesce(u.scraper_enabled, false) = true    
+    "
     DB[q].first[:n].to_i
   end,
   :threshold_function => Proc.new do |*args|
-    q = 'select sum(v.pages_per_day) as n from v_dfyl_capacity_needed v where v.pages_per_day > 0'
+    q = "
+    select 'daily pages upload needed', sum(v.pages_per_day) as n 
+    from v_dfyl_capacity_needed v 
+    where v.pages_per_day > 0        
+    "
     DB[q].first[:n].to_i
   end,
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'pages uploaded',
 }, {
   :section_name => '2. Capacity',
-  :name => 'Daily Emails',
-  :description => 'daily email deliveries capacity (achieved / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
+  :name => 'Emails Delivering Capacity',
+  :description => 'daily email deliveries (capacity / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
   :type => BlackStack::Monitoring::TYPE_INT,
   :value_function => Proc.new do |*args|
     q = "
-    select sum(a.max_deliveries_per_day) as n
+    select 'daily emails delivery capacity', sum(a.max_deliveries_per_day) as n
     from eml_address a
-    where coalesce(a.enabled, false) = true
-    and coalesce(a.shared, false) = true
-    and coalesce(a.check_success, false) = true
+    where a.delete_time is null
+    and a.shared = true
+    and a.enabled = true    
     "
     DB[q].first[:n].to_i
   end,
   :threshold_function => Proc.new do |*args|
-    q = 'select cast(sum(v.email_credits) as float)/28 as n from v_eml_deadlines v where v.email_credits > 0'
+    q = "
+    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/28 as n 
+    from v_eml_deadlines v 
+    where v.email_credits > 0    
+    "
     DB[q].first[:n].to_i
   end,
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'emails deliveried',
+
+# Under-performing
+# under-performing: to know if I all resources are running at all their capacity
+}, {
+  :section_name => '3. Under-Performing',
+  :name => 'Page Uploading Under-Performing',
+  :description => 'Daily pages upload under-performing (achieved / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select 'pages uploaded last day', count(distinct a.id_page) as n
+    from scr_assignation a
+    where a.create_time > current_timestamp - interval '1 day'
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    q = "
+    select 'daily pages upload needed', sum(v.pages_per_day) as n
+    from v_dfyl_capacity_needed v 
+    where v.pages_per_day > 0
+    "
+    DB[q].first[:n].to_i
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'pages uploaded',
+}, {
+  :section_name => '3. Under-Performing',
+  :name => 'Emails Delivering Under-Performing',
+  :description => 'daily email deliveries under-performing (achieved / needed)<br/><a target="_window" href="https://github.com/leandrosardi/cs/issues/22">Problem Resolution Procedure</a>.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select 'emails delivered last day', count(distinct d.id_lead) as n
+    from eml_delivery d
+    where d.create_time > current_timestamp - interval '1 day'
+    and coalesce(d.delivery_success, false) = true
+    and coalesce(d.is_response, false) = false
+    and coalesce(d.is_bounce, false) = false
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    q = "
+    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/28 as n 
+    from v_eml_deadlines v 
+    where v.email_credits > 0
+    "
+    DB[q].first[:n].to_i
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
+  :unit_name => 'emails deliveried',
+
+# Queues
+# queues: to detect when many tasks are getting stuck, and pending for processing.
+
+# Failures
+# failures: to detect when many tasks are getting failed recurrently.
+
+# IPN
+}, {
+  :section_name => '4. Queue',
+  :name => 'i2p.ipn',
+  :description => 'IPNs pending for processing.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as n
+    from buffer_paypal_notification b
+    where b.sync_end_time is null
+    and coalesce(b.sync_reservation_times, 0) < 3 
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    0
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'IPNs',
+}, {
+  :section_name => '4. Queue',
+  :name => 'i2p.baddebt',
+  :description => 'Payments processing failures with active subscriptions.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as n
+    from (
+      select b.subscr_id, count(b.id) as n, max(b.create_time) as last_ipn
+      from buffer_paypal_notification b 
+      join \"subscription\" s on (s.subscr_id=b.subscr_id and coalesce(s.active,false)=true) 
+      where b.txn_type='subscr_failed' 
+      group by b.subscr_id
+      having max(b.create_time) < current_timestamp - interval '6 days'
+    )
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    0
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'IPNs',
+}, {
+  :section_name => '4. Queue',
+  :name => 'i2p.movement',
+  :description => 'Accounts who did not update their balance snapshot in the last hour.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as m
+    from account a 
+    where coalesce(update_balance_end_time, '2000-01-01') < current_timestamp - interval '2 hours'
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    0
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'Accounts',
+
+
+}, {
+  :section_name => '5. Failures',
+  :name => 'i2p.ipn',
+  :description => 'IPNs failed.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as n
+    from buffer_paypal_notification b
+    where b.sync_end_time is null
+    and coalesce(b.sync_reservation_times, 0) >= 3 
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    0
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'IPNs',
+}, {
+  :section_name => '5. Failures',
+  :name => 'i2p.movement',
+  :description => 'Accounts who did not update their balance because of any glitch.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    select count(*) as m
+    from account a 
+    where coalesce(update_balance_success, false) = false
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    0
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'Accounts',
+
+# Leads
+}, {
+  :section_name => '4. Queue',
+  :name => 'leads.export',
+  :description => 'Export lists pending to be updated.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    SELECT count(DISTINCT e.id) as n
+    FROM fl_export e
+    JOIN fl_export_lead el ON ( el.id_export = e.id AND el.create_time > e.create_file_end_time )
+    -- not deleted
+    WHERE e.delete_time IS NULL
+    -- not archived
+    and e.delete_time is null
+    and e.archive_success is null
+    and e.archive_start_time is null
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    0
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'Exports',
+
+}, {
+  :section_name => '5. Failures',
+  :name => 'leads.export',
+  :description => 'Export lists failed when being updated.',
+  :type => BlackStack::Monitoring::TYPE_INT,
+  :value_function => Proc.new do |*args|
+    q = "
+    SELECT count(DISTINCT e.id) as n
+    FROM fl_export e
+    -- not deleted
+    WHERE e.delete_time IS NULL
+    -- not archived
+    and e.delete_time is null
+    and e.archive_success is null
+    and e.archive_start_time is null
+    -- failed
+    and coalesce(e.create_file_success, false) = false    
+    "
+    DB[q].first[:n].to_i
+  end,
+  :threshold_function => Proc.new do |*args|
+    0
+  end,
+  :comparsion => BlackStack::Monitoring::COMPARSION_LESS_EQUAL,
+  :unit_name => 'Exports',
+
+
+
+=begin
 }, {
   :section_name => '3. Performance',
   :name => 'Pages Upload / Hr.',
@@ -197,6 +427,7 @@ BlackStack::Monitoring.set([{
   end,
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'emails',
+=end
 }])
 %>
 
