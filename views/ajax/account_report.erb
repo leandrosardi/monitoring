@@ -122,9 +122,16 @@ begin
             and v.mm=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
             and v.dd=extract('day', cast('#{now}' as timestamp)-interval '1 day')         
         "].first
+    elsif period == 'last_24_hours'
+        row = DB["
+            select 1 as total_days, sum(total_pages) as total_pages
+            from v_scraping_expenses_daily v 
+            where v.id_account='#{aid}' 
+            and cast(v.yy||'-'||v.mm||'-'||v.dd as timestamp) >= cast('#{now}' as timestamp)-interval '1 days'
+        "].first
     elsif period == 'last_2_days'
         row = DB["
-            select 2 as total_days, sum(total_pages) as total_pages
+            select 1 as total_days, sum(total_pages) as total_pages
             from v_scraping_expenses_daily v 
             where v.id_account='#{aid}' 
             and cast(v.yy||'-'||v.mm||'-'||v.dd as timestamp) >= cast('#{now}' as timestamp)-interval '2 days'
@@ -222,6 +229,10 @@ begin
             and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
             and t.\"day\"=extract('day', cast('#{now}' as timestamp)-interval '1 day')         
         "
+    elsif period == 'last_24_hours'
+        q += "
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '1 days'
+        "
     elsif period == 'last_2_days'
         q += "
             and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '2 days'
@@ -280,7 +291,7 @@ begin
     end 
 
     # needed emails
-    row = DB["select cast(sum(v.email_credits) as float)/28 as deliveries_per_day from v_eml_deadlines v where v.id_account = '#{aid}'"].first
+    row = DB["select cast(sum(v.email_credits) as float)/15 as deliveries_per_day from v_eml_deadlines v where v.id_account = '#{aid}'"].first
     x = row.nil? ? 0 : row[:deliveries_per_day].to_i
     # delivered emails
     y = 0 # total pages
@@ -302,6 +313,13 @@ begin
             and t.\"year\"=extract('year', cast('#{now}' as timestamp)-interval '1 day') 
             and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
             and t.\"day\"=extract('day', cast('#{now}' as timestamp)-interval '1 day')
+        "].first
+    elsif period == 'last_24_hours'
+        row = DB["
+            select 1 as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
+            from eml_timeline t 
+            where t.id_account='#{aid}'    
+            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '1 days'
         "].first
     elsif period == 'last_2_days'
         row = DB["

@@ -104,7 +104,7 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/28 as n 
+    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/15 as n 
     from v_eml_deadlines v 
     where v.email_credits > 0    
     "
@@ -156,7 +156,7 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/28 as n 
+    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/15 as n 
     from v_eml_deadlines v 
     where v.email_credits > 0
     "
