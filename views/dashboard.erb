@@ -79,8 +79,9 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', sum(v.pages_per_day) as n 
-    from v_dfyl_capacity_needed v 
+    select 'daily pages upload needed', sum(coalesce(a.dfyl_daily_quota,v.pages_per_day_2)) as n 
+    from v_dfyl_capacity_needed v
+    join account a on a.id=v.id_account
     where v.pages_per_day > 0        
     "
     DB[q].first[:n].to_i
@@ -104,8 +105,9 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/15 as n 
-    from v_eml_deadlines v 
+    select 'daily pages upload needed', sum(coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int))) as n 
+    from v_eml_capacity_needed v
+    join account a on a.id=v.id_account
     where v.email_credits > 0    
     "
     DB[q].first[:n].to_i
@@ -130,8 +132,9 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', sum(v.pages_per_day) as n
+    select 'daily pages upload needed', sum(coalesce(a.dfyl_daily_quota,v.pages_per_day_2)) as n
     from v_dfyl_capacity_needed v 
+    join account a on a.id=v.id_account
     where v.pages_per_day > 0
     "
     DB[q].first[:n].to_i
@@ -156,9 +159,10 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', cast(sum(v.email_credits) as float)/15 as n 
-    from v_eml_deadlines v 
-    where v.email_credits > 0
+    select 'daily pages upload needed', sum(coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int))) as n 
+    from v_eml_capacity_needed v
+    join account a on a.id=v.id_account
+    where v.email_credits > 0    
     "
     DB[q].first[:n].to_i
   end,

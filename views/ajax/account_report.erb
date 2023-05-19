@@ -99,7 +99,12 @@ begin
     end
     
     # needed pages
-    row = DB["select pages_per_day from v_dfyl_capacity_needed where id_account = '#{aid}'"].first
+    row = DB["
+        select coalesce(a.dfyl_daily_quota, cast(v.pages_per_day_2 as int)) as pages_per_day  
+        from v_dfyl_capacity_needed v 
+        join account a on a.id=v.id_account
+        where v.id_account = '#{aid}'
+    "].first
     x = row.nil? ? 0 : row[:pages_per_day].to_i 
     # uploaded pages
     y = 0 # total pages
@@ -311,7 +316,12 @@ begin
     end 
 
     # needed emails
-    row = DB["select cast(sum(v.email_credits) as float)/15 as deliveries_per_day from v_eml_deadlines v where v.id_account = '#{aid}'"].first
+    row = DB["
+        select coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int)) as deliveries_per_day 
+        from v_eml_capacity_needed v 
+        join account a on a.id=v.id_account
+        where v.id_account = '#{aid}'
+    "].first
     x = row.nil? ? 0 : row[:deliveries_per_day].to_i
     # delivered emails
     y = 0 # total pages
