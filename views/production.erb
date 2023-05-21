@@ -116,14 +116,11 @@ q = "
             <%
             # periods
             [
-                {:period=>"today", :name=>"today"},
-                {:period=>"yesterday", :name=>"yesterday"},
                 {:period=>"last_24_hours", :name=>"last 24 hours"},
                 {:period=>"last_2_days", :name=>"last 2 days"},
                 {:period=>"last_3_days", :name=>"last 3 days"},
                 {:period=>"last_week", :name=>"last week"},
                 {:period=>"last_month", :name=>"last month"},
-                {:period=>"month", :name=>"this month"},
             ].each { |o|
                 if o[:period] == period
                 %>

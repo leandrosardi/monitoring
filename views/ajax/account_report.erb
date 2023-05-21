@@ -9,6 +9,16 @@ begin
     d = BlackStack::Emails::Account.where(:id=>aid).first
     min_appending_rate = BlackStack::DfyLeads::Order::MIN_APPENDING_RATE
 
+    ndays = 0
+    ndays = 1 if period == 'last_24_hours'
+    ndays = 2 if period == 'last_2_days'
+    ndays = 3 if period == 'last_3_days'
+    ndays = 7 if period == 'last_week'
+    ndays = 30 if period == 'last_month'
+    from = DB["select cast('#{now}' as timestamp)-interval '#{ndays} days' as dt"].first[:dt]
+    sent = DB["select sum(v.n) as n from (#{BlackStack::Emails::query_sents(from, aid)}) as v"].first[:n].to_i
+    pr = DB["select sum(v.n) as n from (#{BlackStack::Emails::query_positive_replies(from, aid)}) as v"].first[:n].to_i
+
     # Balance
     dt = b.deadline
     if dt
@@ -108,89 +118,16 @@ begin
     x = row.nil? ? 0 : row[:pages_per_day].to_i 
     # uploaded pages
     y = 0 # total pages
-    row = nil
-    if period == 'today'
-        row = DB["
-            select 1 as total_days, sum(total_pages) as total_pages
-            from v_scraping_expenses_daily v 
-            where v.id_account='#{aid}' 
-            and v.yy=extract('year', cast('#{now}' as timestamp)) 
-            and v.mm=extract('month', cast('#{now}' as timestamp)) 
-            and v.dd=extract('day', cast('#{now}' as timestamp))         
-        "].first
-    elsif period == 'yesterday'
-        row = DB["
-            select 1 as total_days, sum(total_pages) as total_pages
-            from v_scraping_expenses_daily v 
-            where v.id_account='#{aid}' 
-            and v.yy=extract('year', cast('#{now}' as timestamp)-interval '1 day')
-            and v.mm=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
-            and v.dd=extract('day', cast('#{now}' as timestamp)-interval '1 day')         
-        "].first
-    elsif period == 'last_24_hours'
-        row = DB["
-            select 1 as total_days, count(p.id) as total_pages
-            from scr_movement m
-            join scr_page p on p.id=m.id_page
-            join scr_order o on o.id=p.id_order
-            join \"user\" u on u.id=o.id_user
-            where coalesce(m.type,0)=0
-            and m.create_time > current_timestamp - interval '1 day'
-            and u.id_account='#{aid}'
-        "].first
-    elsif period == 'last_2_days'
-        row = DB["
-            select 2 as total_days, count(p.id) as total_pages
-            from scr_movement m
-            join scr_page p on p.id=m.id_page
-            join scr_order o on o.id=p.id_order
-            join \"user\" u on u.id=o.id_user
-            where coalesce(m.type,0)=0
-            and m.create_time > current_timestamp - interval '2 day'
-            and u.id_account='#{aid}'
-        "].first
-    elsif period == 'last_3_days'
-        row = DB["
-            select 3 as total_days, count(p.id) as total_pages
-            from scr_movement m
-            join scr_page p on p.id=m.id_page
-            join scr_order o on o.id=p.id_order
-            join \"user\" u on u.id=o.id_user
-            where coalesce(m.type,0)=0
-            and m.create_time > current_timestamp - interval '3 day'
-            and u.id_account='#{aid}'
-        "].first
-    elsif period == 'last_week'
-        row = DB["
-            select 7 as total_days, count(p.id) as total_pages
-            from scr_movement m
-            join scr_page p on p.id=m.id_page
-            join scr_order o on o.id=p.id_order
-            join \"user\" u on u.id=o.id_user
-            where coalesce(m.type,0)=0
-            and m.create_time > current_timestamp - interval '7 day'
-            and u.id_account='#{aid}'
-        "].first
-    elsif period == 'last_month'
-        row = DB["
-            select 30 as total_days, count(p.id) as total_pages
-            from scr_movement m
-            join scr_page p on p.id=m.id_page
-            join scr_order o on o.id=p.id_order
-            join \"user\" u on u.id=o.id_user
-            where coalesce(m.type,0)=0
-            and m.create_time > current_timestamp - interval '30 day'
-            and u.id_account='#{aid}'
-        "].first
-    elsif period == 'month'
-        row = DB["
-            select extract('day', cast('#{now}' as timestamp)) as total_days, sum(total_pages) as total_pages
-            from v_scraping_expenses_daily v 
-            where v.id_account='#{aid}' 
-            and v.yy=extract('year', cast('#{now}' as timestamp))
-            and v.mm=extract('month', cast('#{now}' as timestamp)) 
-        "].first
-    end
+    row = DB["
+        select #{ndays} as total_days, count(p.id) as total_pages
+        from scr_movement m
+        join scr_page p on p.id=m.id_page
+        join scr_order o on o.id=p.id_order
+        join \"user\" u on u.id=o.id_user
+        where coalesce(m.type,0)=0
+        and m.create_time > current_timestamp - interval '#{ndays} day'
+        and u.id_account='#{aid}'
+    "].first
     y = row[:total_pages].to_f / row[:total_days].to_f if row && row[:total_days].to_i > 0
     # 
     return_message[:daily_pages_needed] = {}
@@ -237,52 +174,6 @@ begin
         return_message[:active_campaigns][:label][:color] = left > 0 ? 'green' : 'red'
     end
 
-    q = "
-    select sum(coalesce(t.stat_sents, 0)) as sents, sum(coalesce(t.stat_positive_replies, 0)) as prs
-    from eml_timeline t 
-    where t.id_account='#{aid}'    
-    "
-    if period == 'today'
-        q += "
-            and t.\"year\"=extract('year', cast('#{now}' as timestamp)) 
-            and t.\"month\"=extract('month', cast('#{now}' as timestamp)) 
-            and t.\"day\"=extract('day', cast('#{now}' as timestamp))         
-        "
-    elsif period == 'yesterday'
-        q += "
-            and t.\"year\"=extract('year', cast('#{now}' as timestamp)-interval '1 day')
-            and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
-            and t.\"day\"=extract('day', cast('#{now}' as timestamp)-interval '1 day')         
-        "
-    elsif period == 'last_24_hours'
-        q += "
-            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '1 days'
-        "
-    elsif period == 'last_2_days'
-        q += "
-            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '2 days'
-        "
-    elsif period == 'last_3_days'
-        q += "
-            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '3 days'
-        "
-    elsif period == 'last_week'
-        q += "
-            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '7 day'
-        "
-    elsif period == 'last_month'
-        q += "
-            and cast(t.\"year\"||'-'||t.\"month\"||'-'||t.\"day\" as timestamp) >= cast('#{now}' as timestamp)-interval '1 month'
-        "
-    else #if period == 'month'
-        q += "
-            and t.\"year\"=extract('year', cast('#{now}' as timestamp))
-            and t.\"month\"=extract('month', cast('#{now}' as timestamp)) 
-        "
-    end
-    row = DB[q].first
-    sent = row[:sents].to_i
-    pr = row[:prs].to_i
     avg = sent==0 ? 100.0 : (pr.to_f / sent.to_f) * 100.to_f
     return_message[:average_positive_responses_rate] = {}
     if sent == 0 && pr == 0
@@ -325,85 +216,7 @@ begin
     x = row.nil? ? 0 : row[:deliveries_per_day].to_i
     # delivered emails
     y = 0 # total pages
-    row = nil
-    if period == 'today'
-        row = DB["
-            select 1 as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
-            from eml_timeline t 
-            where t.id_account='#{aid}'    
-            and t.\"year\"=extract('year', cast('#{now}' as timestamp)) 
-            and t.\"month\"=extract('month', cast('#{now}' as timestamp)) 
-            and t.\"day\"=extract('day', cast('#{now}' as timestamp))         
-        "].first
-    elsif period == 'yesterday'
-        row = DB["
-            select 1 as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
-            from eml_timeline t 
-            where t.id_account='#{aid}'    
-            and t.\"year\"=extract('year', cast('#{now}' as timestamp)-interval '1 day') 
-            and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
-            and t.\"day\"=extract('day', cast('#{now}' as timestamp)-interval '1 day')
-        "].first
-    elsif period == 'last_24_hours'
-        row = DB["
-            select 1 as total_days, count(distinct d.id_lead) as total_sents
-            from eml_delivery d
-            join eml_followup f on f.id=d.id_followup
-            join \"user\" u on (u.id=f.id_user and u.id_account='#{aid}')
-            where d.create_time >= CAST('#{now}' AS TIMESTAMP) - INTERVAL '1 day'
-            and coalesce(d.delivery_success, false) = true
-            and coalesce(d.is_response, false) = false
-        "].first
-    elsif period == 'last_2_days'
-        row = DB["
-            select 2 as total_days, count(distinct d.id_lead) as total_sents
-            from eml_delivery d
-            join eml_followup f on f.id=d.id_followup
-            join \"user\" u on (u.id=f.id_user and u.id_account='#{aid}')
-            where d.create_time >= CAST('#{now}' AS TIMESTAMP) - INTERVAL '2 day'
-            and coalesce(d.delivery_success, false) = true
-            and coalesce(d.is_response, false) = false
-        "].first
-    elsif period == 'last_3_days'
-        row = DB["
-            select 3 as total_days, count(distinct d.id_lead) as total_sents
-            from eml_delivery d
-            join eml_followup f on f.id=d.id_followup
-            join \"user\" u on (u.id=f.id_user and u.id_account='#{aid}')
-            where d.create_time >= CAST('#{now}' AS TIMESTAMP) - INTERVAL '3 day'
-            and coalesce(d.delivery_success, false) = true
-            and coalesce(d.is_response, false) = false
-        "].first
-    elsif period == 'last_week'
-        row = DB["
-            select 7 as total_days, count(distinct d.id_lead) as total_sents
-            from eml_delivery d
-            join eml_followup f on f.id=d.id_followup
-            join \"user\" u on (u.id=f.id_user and u.id_account='#{aid}')
-            where d.create_time >= CAST('#{now}' AS TIMESTAMP) - INTERVAL '7 day'
-            and coalesce(d.delivery_success, false) = true
-            and coalesce(d.is_response, false) = false
-        "].first
-    elsif period == 'last_month'
-        row = DB["
-            select 30 as total_days, count(distinct d.id_lead) as total_sents
-            from eml_delivery d
-            join eml_followup f on f.id=d.id_followup
-            join \"user\" u on (u.id=f.id_user and u.id_account='#{aid}')
-            where d.create_time >= CAST('#{now}' AS TIMESTAMP) - INTERVAL '30 day'
-            and coalesce(d.delivery_success, false) = true
-            and coalesce(d.is_response, false) = false
-        "].first
-    elsif period == 'month'
-        row = DB["
-            select extract('day', cast('#{now}' as timestamp)) as total_days, sum(coalesce(t.stat_sents, 0)) as total_sents
-            from eml_timeline t 
-            where t.id_account='#{aid}'    
-            and t.\"year\"=extract('year', cast('#{now}' as timestamp)-interval '1 day') 
-            and t.\"month\"=extract('month', cast('#{now}' as timestamp)-interval '1 day') 
-        "].first
-    end
-    y = row[:total_sents].to_f / row[:total_days].to_f if row && row[:total_days].to_i > 0
+    y = sent.to_f / ndays.to_f
     # 
     return_message[:daily_deliveries_needed] = {}
     return_message[:daily_deliveries_needed][:value] = x==0 ? '-' : x.to_label
