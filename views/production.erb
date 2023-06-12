@@ -94,7 +94,7 @@ q = "
             <div class='btn-group'>
                 <button class='btn btn-pink' id='allow_premium' name='allow_premium' data-rows-group-id='accounts' title='Turn Premium ON'><i class='icon-star'></i></button>
                 <button class='btn btn-pink' id='disallow_premium' name='disallow_premium' data-rows-group-id='accounts' title='Turn Premium OFF'><i class='icon-star-empty'></i></button>
-                <button class='btn btn-pink' id='add_bonus' name='add_bonus' data-rows-group-id='accounts' data-toggle="modal" id='open_add_bonus_modal' data-target=".add_bonus" title='Add/Remove Bonus Credits'><i class='icon-gift'></i></button>
+                <button class='btn btn-pink' id='add_bonus' name='add_bonus' data-rows-group-id='accounts' data-toggle="modal" data-target=".add_bonus" title='Add/Remove Bonus Credits'><i class='icon-gift'></i></button>
             </div>
             <%
             end # if @login.user.account.sysowner?
@@ -331,7 +331,7 @@ q = "
         // submit form #edit_addresses_form when button #edit_addresses_button is clicked
         $('#add_bonus_button').click(function() {
             $('#add_bonus_form').find('#selected_ids').val($('#aids').val());
-            $('#add_bonus_form').submit();
+            setTimeout(function() { $('#add_bonus_form').submit(); }, 100); // be sure to submit the form after the #selected_ids is updated
         });
 
         // hide modals when show the page
