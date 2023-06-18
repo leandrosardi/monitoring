@@ -107,7 +107,7 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select sum(w.deliveries_per_day)
+    select sum(w.deliveries_per_day) as n
     from (
       select v.id_account, coalesce(v.deliveries_per_day, 0) as deliveries_per_day 
       --select 'daily pages upload needed', sum(coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int))) as n 
@@ -172,10 +172,19 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', sum(coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int))) as n 
-    from v_eml_capacity_needed v
-    join account a on a.id=v.id_account
-    where v.email_credits > 0    
+    select sum(w.deliveries_per_day) as n
+    from (
+      select v.id_account, coalesce(v.deliveries_per_day, 0) as deliveries_per_day 
+      --select 'daily pages upload needed', sum(coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int))) as n 
+      from v_eml_capacity_needed v
+      join \"user\" u on v.id_account=u.id_account
+      join eml_campaign c on (u.id=c.id_user and coalesce(c.use_public_addresses,false)=true)
+      join eml_followup f on (c.id=f.id_campaign and coalesce(f.status,0)=1)
+      join account a on a.id=v.id_account
+      where coalesce(v.deliveries_per_day, 0) > 0    
+      --and v.account_name = 'Linkedtified'
+      group by v.id_account, v.deliveries_per_day
+    ) as w
     "
     DB[q].first[:n].to_i
   end,
