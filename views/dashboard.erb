@@ -62,6 +62,7 @@ BlackStack::Monitoring.set([{
 
 # Capacity
 # capacity: to know if I have resources enough to handle the current clientelle
+=begin
 }, {
   :section_name => '2. Capacity',
   :name => 'Page Uploading Capacity',
@@ -88,6 +89,7 @@ BlackStack::Monitoring.set([{
   end,
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'pages uploaded',
+=end
 }, {
   :section_name => '2. Capacity',
   :name => 'Emails Delivering Capacity',
@@ -105,10 +107,19 @@ BlackStack::Monitoring.set([{
   end,
   :threshold_function => Proc.new do |*args|
     q = "
-    select 'daily pages upload needed', sum(coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int))) as n 
-    from v_eml_capacity_needed v
-    join account a on a.id=v.id_account
-    where v.email_credits > 0    
+    select sum(w.deliveries_per_day)
+    from (
+      select v.id_account, coalesce(v.deliveries_per_day, 0) as deliveries_per_day 
+      --select 'daily pages upload needed', sum(coalesce(a.eml_daily_quota, cast(v.deliveries_per_day as int))) as n 
+      from v_eml_capacity_needed v
+      join "user" u on v.id_account=u.id_account
+      join eml_campaign c on (u.id=c.id_user and coalesce(c.use_public_addresses,false)=true)
+      join eml_followup f on (c.id=f.id_campaign and coalesce(f.status,0)=1)
+      join account a on a.id=v.id_account
+      where coalesce(v.deliveries_per_day, 0) > 0    
+      --and v.account_name = 'Linkedtified'
+      group by v.id_account, v.deliveries_per_day
+    ) as w
     "
     DB[q].first[:n].to_i
   end,
@@ -117,6 +128,7 @@ BlackStack::Monitoring.set([{
 
 # Under-performing
 # under-performing: to know if I all resources are running at all their capacity
+=begin
 }, {
   :section_name => '3. Under-Performing',
   :name => 'Page Uploading Under-Performing',
@@ -141,6 +153,7 @@ BlackStack::Monitoring.set([{
   end,
   :comparsion => BlackStack::Monitoring::COMPARSION_GREATER,
   :unit_name => 'pages uploaded',
+=end
 }, {
   :section_name => '3. Under-Performing',
   :name => 'Emails Delivering Under-Performing',
