@@ -117,6 +117,7 @@ begin
     "].first
     x = row.nil? ? 0 : row[:pages_per_day].to_i 
     # uploaded pages
+=begin
     y = 0 # total pages
     row = DB["
         select #{ndays} as total_days, count(p.id) as total_pages
@@ -137,7 +138,7 @@ begin
     return_message[:daily_pages_needed][:label] = {}
     return_message[:daily_pages_needed][:label][:value] = "#{'%.1f' % y}/d"
     return_message[:daily_pages_needed][:label][:color] = y > x ? 'green' : 'red'
-
+=end
     # Emails Deliveries
     w = d.campaigns.size
     x = d.campaigns.select { |o| o.status==1 && o.stat_left.to_i > 0 }.size
