@@ -230,7 +230,9 @@ q = "
 
         $('.secret_login').click(function() {
             var uid = $(this).closest('tr').find('.select-row').data('id');
+console.log(uid);
             secret_login_url = '<%=CS_HOME_WEBSITE%>/monitoring/filter_secret_login?lid=<%=@login.id%>&uid=' + uid;
+console.log(secret_login_url);
             navigator.clipboard.writeText(secret_login_url);
 
             // get the icon inside this button
