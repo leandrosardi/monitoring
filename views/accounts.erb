@@ -1,8 +1,8 @@
 <%
-search_keyword = @login.user.preference('monitoring.production.search_keyword', '', params[:search_keyword]).strip
-search_premium = @login.user.preference('monitoring.production.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
-selected_ids = @login.user.preference('monitoring.production.selected_ids', '', nil)
-period = @login.user.preference('monitoring.production.period', 'today', params[:period])
+search_keyword = @login.user.preference('monitoring.financial.search_keyword', '', params[:search_keyword]).strip
+search_premium = @login.user.preference('monitoring.financial.search_premium', false, params[:search_premium].nil? ? nil : params[:search_premium].to_s == 'true')
+selected_ids = @login.user.preference('monitoring.financial.selected_ids', '', nil)
+period = @login.user.preference('monitoring.financial.period', 'today', params[:period])
 ids = selected_ids.split(',')
 all_prods = BlackStack::I2P::services_descriptor
 
@@ -74,11 +74,11 @@ q = "
 <div class="mynavbar mysticky">
 	<section class="row-fluid">	
 		<div class="span6">
-		    <%=nav2("Monotoring", "/monitoring", "Production")%>
+		    <%=nav2("Monotoring", "/monitoring", "Accounts")%>
 		</div>
 		<div class="span6" style='text-align:right;'>
             <div class="pull-right">
-                <form action="/monitoring/production" method="get">
+                <form action="/monitoring/accounts" method="get">
                     <div class="span8">
                         <input type='text' class='input-block-level select-all-on-focus' id='search_keyword' name='search_keyword' value='<%=search_keyword.encode_html%>' />
                     </div>
@@ -94,14 +94,14 @@ q = "
             <div class='btn-group'>
                 <button class='btn btn-pink' id='allow_premium' name='allow_premium' data-rows-group-id='accounts' title='Turn Premium ON'><i class='icon-star'></i></button>
                 <button class='btn btn-pink' id='disallow_premium' name='disallow_premium' data-rows-group-id='accounts' title='Turn Premium OFF'><i class='icon-star-empty'></i></button>
-                <button class='btn btn-pink' id='add_bonus' name='add_bonus' data-rows-group-id='accounts' data-toggle="modal" data-target=".add_bonus" title='Add/Remove Bonus Credits'><i class='icon-gift'></i></button>
+                <button class='btn btn-pink' id='add_bonus' name='add_bonus' data-rows-group-id='accounts' data-toggle="modal" id='open_add_bonus_modal' data-target=".add_bonus" title='Add/Remove Bonus Credits'><i class='icon-gift'></i></button>
             </div>
             <%
             end # if @login.user.account.sysowner?
             %>
 
             <div class='btn-group'>
-                <a href='/monitoring/production?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
+                <a href='/monitoring/accounts?search_premium=<%=search_premium ? "false" : "true"%>' class='btn btn-blue <%=search_premium ? "active" : ""%>' id='premium_only' name='premium_only' title='Show Premium Users Only'><i class='icon-star'></i></a>
             </div>
         </div>
 	</section>
@@ -109,18 +109,16 @@ q = "
 
 <!-- Single Panel -->
 <section class="row-fluid">
-    <div class="span12 box">    
-        <section class="row-fluid">
+	<div class="span12 box">
+        <p>
             <b>Records:</b> <%=from_row.to_i.to_label%> to <%=to_row.to_i.to_label%> <b>of</b> <%=total_rows.to_i.to_label%> | <b>Period:</b> 
             <span style='margin:5px;'>
             <%
             # periods
             [
-                {:period=>"last_24_hours", :name=>"last 24 hours"},
-                {:period=>"last_2_days", :name=>"last 2 days"},
-                {:period=>"last_3_days", :name=>"last 3 days"},
-                {:period=>"last_week", :name=>"last week"},
-                {:period=>"last_month", :name=>"last month"},
+                {:period=>"today", :name=>"today"},
+                {:period=>"yesterday", :name=>"yesterday"},
+                {:period=>"month", :name=>"this month"},
             ].each { |o|
                 if o[:period] == period
                 %>
@@ -128,7 +126,7 @@ q = "
                 <%
                 else
                 %>
-                    <a href="/monitoring/production?period=<%=o[:period]%>"><%=o[:name]%></a>
+                    <a href="/monitoring/accounts?period=<%=o[:period]%>"><%=o[:name]%></a>
                 <%
                 end
                 %>
@@ -136,47 +134,9 @@ q = "
                 <%
             }
             %>
-            </span>
-        </section>
+        </span>
 
-        <!-- Stats -->
-        <!--
-        <section class="row-fluid">
-            <div class="span6 box no-border non-collapsible">
-                <div class="span3 pie-chart">
-                    <div id="easy-pie-chart-1" data-percent="43" class="easyPieChart" style="width: 100px; height: 100px; line-height: 100px;">
-                        <button class="btn btn-large btn-blue disabled">5,675</button>
-                    </div>
-                    <div class="caption">
-                        Pages Uploaded
-                    </div>
-                </div>
-        
-                <div class="span3 pie-chart">
-                    <div id="easy-pie-chart-2" data-percent="43" class="easyPieChart" style="width: 100px; height: 100px; line-height: 100px;">
-                        <button class="btn btn-large btn-black disabled">4,000</button>
-                    </div>
-                    <div class="caption">
-                        Pages Neeeded
-                    </div>
-                </div>
-                
-                <div class="span3 pie-chart">
-                    <div id="easy-pie-chart-3" data-percent="43" class="easyPieChart" style="width: 100px; height: 100px; line-height: 100px;">
-                        <button class="btn btn-large btn-orange disabled">75%</button>
-                    </div>
-                    <div class="caption">
-                        Upload Capacity
-                    </div>
-                </div>
-        
-            </div>   
-            <div class="span6">
-                
-            </div>   
-        </section>
-        -->
-        
+        </p>
         <input type='hidden' name='aids' id='aids' value='' />
         <table class="table table-condensed" style="table-layout: fixed; width: 100%;">
             <thead>
@@ -184,20 +144,6 @@ q = "
                 <th style="width:auto;">Account</th>
                 <th style="width:175px;">Contact</th>
                 <th style="width:32px;"><i class='icon-star'></i></th>
-
-                <!-- Balance -->
-                <th style="width:55px;text-align:right;background-color:rgb(245,255,245);">Deadline</th>
-                <th style="width:55px;text-align:right;background-color:rgb(245,255,245);">Lead<br/>Credits</th>
-                <th style="width:55px;text-align:right;background-color:rgb(245,255,245);">Email<br/>Credits</th>
-
-                <!-- Leads Scraping -->
-                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Progr%</th>
-                <th style="width:55px;text-align:right;background-color:rgb(255,245,245);">Verify%</th>
-
-                <!-- Emails Deliveries -->
-                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Left#</th>
-                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Hits%</th>
-                <th style="width:55px;text-align:right;background-color:rgb(245,245,255);">Daily<br/>Emails</th>
 
                 <!-- Access Link -->
                 <th style="width:16px;"></th>
@@ -207,6 +153,7 @@ q = "
                 i = 0
                 DB[q].all do |row|
                     i += 1
+                    row[:id_user] = DB["SELECT id FROM \"user\" WHERE id_account='#{row[:id]}' ORDER BY create_time LIMIT 1"].first[:id] if row[:id_user].nil?
                 %>
                 <tr class='account' data-id='<%=row[:id].to_guid%>' data-uid='<%=row[:id_user].to_guid%>'>
                     <th><input type='checkbox' class='select-row' data-id='<%=row[:id].to_guid%>' data-uid='<%=row[:id_user].to_guid%>' data-rows-group-id='accounts' <%=ids.include?(row[:id].to_guid) ? 'checked' : ''%> /></th>
@@ -222,24 +169,7 @@ q = "
                     <td class="fix" title="<%=row[:premium] ? 'Premium Account' : 'Free Account'%>">
                         <%=row[:premium] ? '<i class="icon-star" style="color:blue"></i>' : '<i class="icon-star-empty" style="color:gray"></i>'%>
                     </td>
-
-                    <!-- Balance -->
-                    <td class="fix deadline" title="" style="text-align:right;background-color:rgb(245,255,245);"></td>
-                    <td class="fix leads_credits" title="" style="text-align:right;background-color:rgb(245,255,245);"></td>
-                    <td class="fix email_credits" title="" style="text-align:right;background-color:rgb(245,255,245);"></td>
-
-                    <!-- Leads Scraping -->
-                    <td class="fix active_orders" title="" style="text-align:right;background-color:rgb(255,245,245);"></td>
-                    <td class="fix average_verified_rate" title="" style="text-align:right;background-color:rgb(255,245,245);"></td>
-                    <!--
-                    <td class="fix daily_pages_needed" title="" style="text-align:right;background-color:rgb(255,245,245);"></td>
-                    -->
-
-                    <!-- Emails Deliveries -->
-                    <td class="fix active_campaigns" title="" style="text-align:right;background-color:rgb(245,245,255);"></td>
-                    <td class="fix average_positive_responses_rate" title="" style="text-align:right;background-color:rgb(245,245,255);"></td>
-                    <td class="fix daily_deliveries_needed" title="" style="text-align:right;background-color:rgb(245,245,255);"></td>
-    
+                    
                     <!-- Access Link -->
                     <td class="fix" title="Account Access Link. Paste it into another browser." style='text-align:center;'>
                         <button class='btn btn-link secret_login' name='secret_login'><i class="icon-copy"></i></button>
@@ -332,7 +262,7 @@ q = "
         // submit form #edit_addresses_form when button #edit_addresses_button is clicked
         $('#add_bonus_button').click(function() {
             $('#add_bonus_form').find('#selected_ids').val($('#aids').val());
-            setTimeout(function() { $('#add_bonus_form').submit(); }, 100); // be sure to submit the form after the #selected_ids is updated
+            $('#add_bonus_form').submit();
         });
 
         // hide modals when show the page
@@ -385,22 +315,22 @@ q = "
                     str = '<span class="badge badge-'+response.average_verified_rate.color+'" title="'+response.average_verified_rate.title+'">'+response.average_verified_rate.value+'</span><br/>';
                     str += '<span style="color:'+response.average_verified_rate.label.color+'" title="'+response.average_verified_rate.title+'">'+response.average_verified_rate.label.value+'</span>';
                     td.html(str);
-                    /*
+                    
                     td = tr.find('td.daily_pages_needed');
                     str = '<span class="badge badge-'+response.daily_pages_needed.color+'" title="'+response.daily_pages_needed.title+'">'+response.daily_pages_needed.value+'</span><br/>';
                     str += '<span style="color:'+response.daily_pages_needed.label.color+'" title="'+response.daily_pages_needed.title+'">'+response.daily_pages_needed.label.value+'</span>';
                     td.html(str);
-                    */
+                    
                     // active campaigns
                     td = tr.find('td.active_campaigns');
                     str = '<span class="badge badge-'+response.active_campaigns.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.value+'</span><br/>';
-                    if (response.active_campaigns.label != undefined) {
+                    if (response.active_orders.label != undefined) {
                         str += '<span style="color:'+response.active_campaigns.label.color+'" title="'+response.active_campaigns.title+'">'+response.active_campaigns.label.value+'</span>';
                     }
                     td.html(str);
                     
                     td = tr.find('td.average_positive_responses_rate');
-                    str = '<span style="color:gray;" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.value+'</span><br/>';
+                    str = '<span class="badge badge-'+response.average_positive_responses_rate.color+'" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.value+'</span><br/>';
                     if (response.average_positive_responses_rate.label != undefined) {
                         str += '<span style="color:'+response.average_positive_responses_rate.label.color+'" title="'+response.average_positive_responses_rate.title+'">'+response.average_positive_responses_rate.label.value+'</span>';
                     }
