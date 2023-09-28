@@ -2,8 +2,8 @@
 begin
     aids = params[:aids].split(',')
     DB.execute("UPDATE \"account\" SET premium = true WHERE id IN ('#{aids.join("','")}')")
-    redirect "/monitoring/production?msg=Premium+Enabled"
+    redirect "/monitoring/accounts?msg=Premium+Enabled"
 rescue => e
-    redirect "/monitoring/production?err=Error+Enabling+Premium (#{CGI.escape(e.message)})"
+    redirect "/monitoring/accounts?err=Error+Enabling+Premium (#{CGI.escape(e.message)})"
 end
 %>

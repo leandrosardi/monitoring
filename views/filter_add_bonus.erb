@@ -28,8 +28,8 @@ begin
         BlackStack::I2P::Account.update_balance_snapshot(aids)
     end # if credits != 0
     # back to the accounts list
-    redirect "/monitoring/production?msg=Bonus+Added"
+    redirect "/monitoring/accounts?msg=Bonus+Added"
 rescue => e
-    redirect "/monitoring/production?err=Error+Adding+Bonus (#{CGI.escape(e.message)})"
+    redirect "/monitoring/accounts?err=Error+Adding+Bonus (#{CGI.escape(e.message)})"
 end
 %>
